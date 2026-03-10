@@ -10,6 +10,11 @@ class AddTest extends AnyFlatSpec with ChiselScalatestTester {
       AddTest(dut, 1.0f, 0.5f)
       AddTest(dut, 0.5f, 1.0f)
       AddTest(dut, -1.0f, -0.5f)
+      AddTest(dut, 1.75f, -0.5f)
+      AddTest(dut, -0.5f, 1.75f)
+      AddTest(dut, -1.75f, 0.5f)
+      AddTest(dut, 0.5f, -1.75f)
+      // AddTest(dut, 1.0f, -0.5f)
     }
   }
 }

@@ -11,5 +11,7 @@ class SignificandAdder extends Module {
 
   io.out.sign := io.larger.sign
   io.out.exponent := io.larger.exponent
-  io.out.significand := io.smaller.significand +& io.larger.significand
+  val addition = io.larger.significand +& io.smaller.significand
+  val subtraction = io.larger.significand - io.smaller.significand
+  io.out.significand := Mux(io.larger.sign === io.smaller.sign, addition, subtraction)
 }
