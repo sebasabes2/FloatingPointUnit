@@ -12,10 +12,10 @@ class FPU extends Module {
 
   val a_significant = 1.U(1.W) ## io.a(22,0)
   val a_exponent = io.a(30,23)
-  
+
   val b_significant = 1.U(1.W) ## io.b(22,0)
   val b_exponent = io.b(30,23)
-  
+
   val added_significant = a_significant +& b_significant;
 
   // Convert to FloatingPoint Bundle
@@ -32,7 +32,7 @@ class FPU extends Module {
 
   // Encode output
 
-  io.res := Cat(0.U(1.W), normalizer.io.out.exponent(7,0), normalizer.io.out.significant(22,0))
+  io.res := normalizer.io.out.encode()
 }
 
 object FPU extends App {
