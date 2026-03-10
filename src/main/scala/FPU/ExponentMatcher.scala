@@ -9,10 +9,13 @@ class ExponentMatcher extends Module {
     val larger = Output(new FloatingPoint)
     val smaller = Output(new FloatingPoint)
   })
+  
+  val input1Larger = io.input1.exponent >= io.input2.exponent
+  val larger = Mux(input1Larger, io.input1, io.input2)
+  val smaller = Mux(input1Larger, io.input2, io.input1)
 
-  // Assume input2 has a smaller exponent than input1
-  val exponentDifference = io.input1.exponent - io.input2.exponent
-  io.larger := io.input1
-  io.smaller.exponent := io.input1.exponent
-  io.smaller.significand := io.input2.significand >> exponentDifference(6,0)
+  val exponentDifference = larger.exponent - smaller.exponent
+  io.larger := larger
+  io.smaller.exponent := larger.exponent
+  io.smaller.significand := smaller.significand >> exponentDifference(6,0)
 }
