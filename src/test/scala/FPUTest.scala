@@ -4,8 +4,8 @@ import chiseltest._
 
 object FPUTest {
   def apply(dut: FPU, input1: Float, input2: Float, expected: Float) {
-    dut.io.a.poke(java.lang.Float.floatToIntBits(input1).U)
-    dut.io.b.poke(java.lang.Float.floatToIntBits(input2).U)
-    dut.io.res.expect(java.lang.Float.floatToIntBits(expected).U)
+    dut.io.a.poke(("x" + java.lang.Float.floatToIntBits(input1).toHexString).U)
+    dut.io.b.poke(("x" + java.lang.Float.floatToIntBits(input2).toHexString).U)
+    dut.io.res.expect(("x" + java.lang.Float.floatToIntBits(expected).toHexString).U)
   }
 }

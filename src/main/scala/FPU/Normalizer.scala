@@ -12,6 +12,7 @@ class Normalizer extends Module {
   // TODO: make input width and output width parameterizable
 
   val should_normalize = io.in.significand(24).asBool
+  io.out.sign := io.in.sign
   io.out.exponent := Mux(should_normalize, io.in.exponent + 1.U, io.in.exponent)
   io.out.significand := Mux(should_normalize, io.in.significand(24,1), io.in.significand(23,0))
 }

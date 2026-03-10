@@ -9,6 +9,7 @@ class SignificandAdder extends Module {
     val out = Output(new FloatingPoint)
   })
 
+  io.out.sign := io.larger.sign
   io.out.exponent := io.larger.exponent
   io.out.significand := io.smaller.significand +& io.larger.significand
 }
