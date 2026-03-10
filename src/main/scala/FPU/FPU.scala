@@ -10,25 +10,33 @@ class FPU extends Module {
     val res = Output(UInt(32.W))
   })
 
-  val a_significant = 1.U(1.W) ## io.a(22,0)
+  val a_significand = 1.U(1.W) ## io.a(22,0)
   val a_exponent = io.a(30,23)
 
-  val b_significant = 1.U(1.W) ## io.b(22,0)
+  val b_significand = 1.U(1.W) ## io.b(22,0)
   val b_exponent = io.b(30,23)
 
-  val added_significant = a_significant +& b_significant;
+  // Decode floating points
+  // Move this to FloatingPoint class
 
-  // Convert to FloatingPoint Bundle
-  // TODO: do this earlier
+  val input1 = Wire(new FloatingPoint)
+  input1.exponent := a_exponent
+  input1.significand := a_significand
 
-  val addedFloatingPoint = Wire(new FloatingPoint)
-  addedFloatingPoint.exponent := a_exponent
-  addedFloatingPoint.significant := added_significant
+  val input2 = Wire(new FloatingPoint)
+  input2.exponent := b_exponent
+  input2.significand := b_significand
+
+  // Significand Adder
+
+  val significandAdder = Module(new SignificandAdder)
+  significandAdder.io.larger := input1
+  significandAdder.io.smaller := input2
 
   // Normalizer
 
   val normalizer = Module(new Normalizer)
-  normalizer.io.in := addedFloatingPoint
+  normalizer.io.in := significandAdder.io.out
 
   // Encode output
 
