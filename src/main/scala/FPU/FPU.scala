@@ -18,12 +18,21 @@ class FPU extends Module {
   
   val added_significant = a_significant +& b_significant;
 
-  val should_normalize = added_significant(24).asBool
+  // Convert to FloatingPoint Bundle
+  // TODO: do this earlier
 
-  val res_significant = Mux(should_normalize, added_significant(24,1), added_significant(23,0))
-  val res_exponent = Mux(should_normalize, a_exponent + 1.U, a_exponent)
+  val addedFloatingPoint = Wire(new FloatingPoint)
+  addedFloatingPoint.exponent := a_exponent
+  addedFloatingPoint.significant := added_significant
 
-  io.res := Cat(0.U(1.W), res_exponent, res_significant(22,0))
+  // Normalizer
+
+  val normalizer = Module(new Normalizer)
+  normalizer.io.in := addedFloatingPoint
+
+  // Encode output
+
+  io.res := Cat(0.U(1.W), normalizer.io.out.exponent(7,0), normalizer.io.out.significant(22,0))
 }
 
 object FPU extends App {
