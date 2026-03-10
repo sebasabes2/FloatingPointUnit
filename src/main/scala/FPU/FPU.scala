@@ -10,24 +10,25 @@ class FPU extends Module {
     val res = Output(UInt(32.W))
   })
 
-  // // Decode floating points
-
+  // Decode floating points
   val input1 = FloatingPoint.decode(io.a)
   val input2 = FloatingPoint.decode(io.b)
 
-  // Significand Adder
+  // Exponent Matcher
+  val exponentMatcher = Module(new ExponentMatcher)
+  exponentMatcher.io.input1 := input1
+  exponentMatcher.io.input2 := input2
 
+  // Significand Adder
   val significandAdder = Module(new SignificandAdder)
-  significandAdder.io.larger := input1
-  significandAdder.io.smaller := input2
+  significandAdder.io.larger := exponentMatcher.io.larger
+  significandAdder.io.smaller := exponentMatcher.io.smaller
 
   // Normalizer
-
   val normalizer = Module(new Normalizer)
   normalizer.io.in := significandAdder.io.out
 
   // Encode output
-
   io.res := normalizer.io.out.encode()
 }
 
