@@ -27,8 +27,12 @@ class FloatingPointUnit extends Module {
   val rounder = Module(new Rounder)
   rounder.io.input := normalizer.io.output
 
+  // Renormalizer
+  val renormalizer = Module(new Normalizer)
+  renormalizer.io.input := rounder.io.output
+
   // Encode output
-  io.res := rounder.io.output.encode()
+  io.res := renormalizer.io.output.encode()
 }
 
 object FloatingPointUnit extends App {
