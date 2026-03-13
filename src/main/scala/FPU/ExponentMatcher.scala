@@ -1,4 +1,4 @@
-package FPU
+package FloatingPointUnit
 
 import chisel3._
 

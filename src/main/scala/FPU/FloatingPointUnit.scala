@@ -1,0 +1,32 @@
+package FloatingPointUnit
+
+import chisel3._
+import chisel3.util._
+
+class FloatingPointUnit extends Module {
+  val io = IO(new Bundle {
+    val a = Input(UInt(32.W))
+    val b = Input(UInt(32.W))
+    val res = Output(UInt(32.W))
+  })
+
+  // Decode floating points
+  val input1 = FloatingPoint.decode(io.a)
+  val input2 = FloatingPoint.decode(io.b)
+
+  // Adder
+  val adder = Module(new Adder)
+  adder.io.input1 := input1
+  adder.io.input2 := input2
+
+  // Normalizer
+  val normalizer = Module(new Normalizer)
+  normalizer.io.input := adder.io.output
+
+  // Encode output
+  io.res := normalizer.io.output.encode()
+}
+
+object FloatingPointUnit extends App {
+  (new chisel3.stage.ChiselStage).emitVerilog(new FloatingPointUnit)
+}
