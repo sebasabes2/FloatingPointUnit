@@ -23,8 +23,12 @@ class FloatingPointUnit extends Module {
   val normalizer = Module(new Normalizer)
   normalizer.io.input := adder.io.output
 
+  // Rounder
+  val rounder = Module(new Rounder)
+  rounder.io.input := normalizer.io.output
+
   // Encode output
-  io.res := normalizer.io.output.encode()
+  io.res := rounder.io.output.encode()
 }
 
 object FloatingPointUnit extends App {

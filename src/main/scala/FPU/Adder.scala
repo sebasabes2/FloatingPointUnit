@@ -18,8 +18,14 @@ class Adder extends Module {
 
   io.output.sign := larger.sign
   io.output.exponent := larger.exponent
-  val addition = larger.significand +& smaller.significand
-  val subtraction = larger.significand - smaller.significand
+  val largerSignificand = larger.significand ## larger.guard ## larger.round ## larger.sticky
+  val smallerSignificand = smaller.significand ## smaller.guard ## smaller.round ## smaller.sticky
+  val addition = largerSignificand +& smallerSignificand
+  val subtraction = largerSignificand - smallerSignificand
   val effectiveOperation = larger.sign === smaller.sign
-  io.output.significand := Mux(effectiveOperation, addition, subtraction)
+  val result = Mux(effectiveOperation, addition, subtraction)
+  io.output.significand := result(34,3)
+  io.output.guard := result(2)
+  io.output.round := result(1)
+  io.output.sticky := result(0)
 }

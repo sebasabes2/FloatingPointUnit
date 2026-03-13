@@ -7,6 +7,10 @@ class FloatingPoint extends Bundle {
   val exponent = UInt(32.W) // TODO: make size parameterizable
   val significand = UInt(32.W) // TODO: make size parameterizable
 
+  val guard = UInt(1.W)
+  val round = UInt(1.W)
+  val sticky = UInt(1.W)
+
   def encode(): UInt = sign ## exponent(7,0) ## significand(22,0) // TODO: subtract bias
 }
 
@@ -16,6 +20,9 @@ object FloatingPoint {
     floatingPoint.sign := input(31)
     floatingPoint.exponent := input(30,23) // TODO: add bias
     floatingPoint.significand := 1.U(1.W) ## input(22,0)
+    floatingPoint.guard := 0.U
+    floatingPoint.round := 0.U
+    floatingPoint.sticky := 0.U
     floatingPoint
   }
 }

@@ -19,5 +19,11 @@ class Normalizer extends Module {
 
   io.output.sign := io.input.sign
   io.output.exponent := Mux(normalizeRight, io.input.exponent + 1.U, io.input.exponent - normalizeLeftAmount)
-  io.output.significand := Mux(normalizeRight, io.input.significand(24,1), io.input.significand(23,0) << normalizeLeftAmount)
+
+  val value = io.input.significand ## io.input.guard ## io.input.round ## io.input.sticky
+  val normalizedValue = Mux(normalizeRight, value(27,1), value(26,0) << normalizeLeftAmount)
+  io.output.significand := normalizedValue(26,3)
+  io.output.guard := normalizedValue(2)
+  io.output.round := normalizedValue(1)
+  io.output.sticky := normalizedValue(0)
 }
