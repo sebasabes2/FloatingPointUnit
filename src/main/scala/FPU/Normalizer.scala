@@ -21,8 +21,8 @@ class Normalizer(exponentWidth: Int, outputSignificandWidth: Int) extends Module
   io.output.exponent := Mux(normalizeRight, io.input.exponent + 1.U, io.input.exponent - normalizeLeftAmount)
 
   val value = io.input.significand ## io.input.guard ## io.input.round ## io.input.sticky
-  val normalizedValue = Mux(normalizeRight, value(outputSignificandWidth + 3,1), value(outputSignificandWidth + 2,0) << normalizeLeftAmount) // TODO: fix these numbers with significandWidth
-  io.output.significand := normalizedValue(outputSignificandWidth + 2,3) // TODO: fix these numbers with significandWidth
+  val normalizedValue = Mux(normalizeRight, value(outputSignificandWidth + 3,1), value(outputSignificandWidth + 2,0) << normalizeLeftAmount)
+  io.output.significand := normalizedValue(outputSignificandWidth + 2,3)
   io.output.guard := normalizedValue(2)
   io.output.round := normalizedValue(1)
   io.output.sticky := normalizedValue(0)
