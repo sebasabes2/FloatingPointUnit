@@ -2,27 +2,27 @@ package FloatingPointUnit
 
 import chisel3._
 
-class Normalizer extends Module {
+class Normalizer(exponentWidth: Int, outputSignificandWidth: Int) extends Module {
   val io = IO(new Bundle {
-    val input = Input(new FloatingPoint)
-    val output = Output(new FloatingPoint)
+    val input = Input(new FloatingPoint(exponentWidth, outputSignificandWidth + 1))
+    val output = Output(new FloatingPoint(exponentWidth, outputSignificandWidth))
   })
 
-  // TODO: make input width and output width parameterizable
+  // TODO: consider making input width parameterizable
   // TODO: give exception on overflow or underflow of exponent
 
-  val normalizeRight = io.input.significand(24).asBool
+  val normalizeRight = io.input.significand(outputSignificandWidth).asBool
   
-  val leadingOneDetector = Module(new LeadingOneDetector(24))
-  leadingOneDetector.io.input := io.input.significand(23,0)
+  val leadingOneDetector = Module(new LeadingOneDetector(outputSignificandWidth))
+  leadingOneDetector.io.input := io.input.significand(outputSignificandWidth - 1,0)
   val normalizeLeftAmount = 23.U - leadingOneDetector.io.position
 
   io.output.sign := io.input.sign
   io.output.exponent := Mux(normalizeRight, io.input.exponent + 1.U, io.input.exponent - normalizeLeftAmount)
 
   val value = io.input.significand ## io.input.guard ## io.input.round ## io.input.sticky
-  val normalizedValue = Mux(normalizeRight, value(27,1), value(26,0) << normalizeLeftAmount)
-  io.output.significand := normalizedValue(26,3)
+  val normalizedValue = Mux(normalizeRight, value(outputSignificandWidth + 3,1), value(outputSignificandWidth + 2,0) << normalizeLeftAmount) // TODO: fix these numbers with significandWidth
+  io.output.significand := normalizedValue(outputSignificandWidth + 2,3) // TODO: fix these numbers with significandWidth
   io.output.guard := normalizedValue(2)
   io.output.round := normalizedValue(1)
   io.output.sticky := normalizedValue(0)

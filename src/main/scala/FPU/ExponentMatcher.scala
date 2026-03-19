@@ -2,12 +2,12 @@ package FloatingPointUnit
 
 import chisel3._
 
-class ExponentMatcher extends Module {
+class ExponentMatcher(exponentWidth: Int, significandWidth: Int) extends Module {
   val io = IO(new Bundle {
-    val input1 = Input(new FloatingPoint)
-    val input2 = Input(new FloatingPoint)
-    val larger = Output(new FloatingPoint)
-    val smaller = Output(new FloatingPoint)
+    val input1 = Input(new FloatingPoint(exponentWidth, significandWidth))
+    val input2 = Input(new FloatingPoint(exponentWidth, significandWidth))
+    val larger = Output(new FloatingPoint(exponentWidth, significandWidth))
+    val smaller = Output(new FloatingPoint(exponentWidth, significandWidth))
   })
 
   val sameExponent = io.input1.exponent === io.input2.exponent
@@ -20,9 +20,9 @@ class ExponentMatcher extends Module {
   io.larger := larger
   io.smaller.sign := smaller.sign
   io.smaller.exponent := larger.exponent
-  val shiftedSignificand = (smaller.significand ## 0.U(32.W)) >> exponentDifference(6,0)
-  io.smaller.significand := shiftedSignificand(63, 32)
-  io.smaller.guard := shiftedSignificand(31)
-  io.smaller.round := shiftedSignificand(30)
-  io.smaller.sticky := shiftedSignificand(29, 0).orR
+  val shiftedSignificand = (smaller.significand ## 0.U(significandWidth.W)) >> exponentDifference
+  io.smaller.significand := shiftedSignificand(2 * significandWidth - 1, significandWidth)
+  io.smaller.guard := shiftedSignificand(significandWidth - 1)
+  io.smaller.round := shiftedSignificand(significandWidth - 2)
+  io.smaller.sticky := shiftedSignificand(significandWidth - 3, 0).orR
 }

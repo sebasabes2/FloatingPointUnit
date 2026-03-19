@@ -10,25 +10,28 @@ class FloatingPointUnit extends Module {
     val res = Output(UInt(32.W))
   })
 
+  val exponentWidth = 8
+  val significandWidth = 24
+
   // Decode floating points
   val input1 = FloatingPoint.decode(io.a)
   val input2 = FloatingPoint.decode(io.b)
 
   // Adder
-  val adder = Module(new Adder)
+  val adder = Module(new Adder(exponentWidth, significandWidth))
   adder.io.input1 := input1
   adder.io.input2 := input2
 
   // Normalizer
-  val normalizer = Module(new Normalizer)
+  val normalizer = Module(new Normalizer(exponentWidth, significandWidth))
   normalizer.io.input := adder.io.output
 
   // Rounder
-  val rounder = Module(new Rounder)
+  val rounder = Module(new Rounder(exponentWidth, significandWidth))
   rounder.io.input := normalizer.io.output
 
   // Renormalizer
-  val renormalizer = Module(new Normalizer)
+  val renormalizer = Module(new Normalizer(exponentWidth, significandWidth))
   renormalizer.io.input := rounder.io.output
 
   // Encode output
