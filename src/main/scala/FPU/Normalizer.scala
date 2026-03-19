@@ -15,13 +15,14 @@ class Normalizer(exponentWidth: Int, outputSignificandWidth: Int) extends Module
   
   val leadingOneDetector = Module(new LeadingOneDetector(outputSignificandWidth))
   leadingOneDetector.io.input := io.input.significand(outputSignificandWidth - 1,0)
-  val normalizeLeftAmount = 23.U - leadingOneDetector.io.position
+  val normalizeLeftAmount = (outputSignificandWidth - 1).U - leadingOneDetector.io.position
 
   io.output.sign := io.input.sign
   io.output.exponent := Mux(normalizeRight, io.input.exponent + 1.U, io.input.exponent - normalizeLeftAmount)
 
-  val value = io.input.significand ## io.input.guard ## io.input.round ## io.input.sticky
-  val normalizedValue = Mux(normalizeRight, value(outputSignificandWidth + 3,1), value(outputSignificandWidth + 2,0) << normalizeLeftAmount)
+  val normalizedRightValue = io.input.significandWithRoundBits()(outputSignificandWidth + 3, 1)
+  val normalizedLeftValue = io.input.significandWithRoundBits()(outputSignificandWidth + 2, 0) << normalizeLeftAmount
+  val normalizedValue = Mux(normalizeRight, normalizedRightValue, normalizedLeftValue)
   io.output.significand := normalizedValue(outputSignificandWidth + 2,3)
   io.output.guard := normalizedValue(2)
   io.output.round := normalizedValue(1)
