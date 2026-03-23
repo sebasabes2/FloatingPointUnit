@@ -16,7 +16,8 @@ class Normalizer(exponentWidth: Int, outputSignificandWidth: Int) extends Module
   val leadingOneDetector = Module(new LeadingOneDetector(outputSignificandWidth))
   leadingOneDetector.io.input := io.input.significand(outputSignificandWidth - 1,0)
   val normalizeLeft = !leadingOneDetector.io.zero
-  val normalizeLeftAmount = (outputSignificandWidth - 1).U - leadingOneDetector.io.position
+  val idealNormalizeLeftAmount = (outputSignificandWidth - 1).U - leadingOneDetector.io.position
+  val normalizeLeftAmount = Mux(io.input.exponent > idealNormalizeLeftAmount, idealNormalizeLeftAmount, io.input.exponent - 1.U)
 
   val exponentNormalizedRight = io.input.exponent + 1.U
   val exponentNormalizedLeft = io.input.exponent - normalizeLeftAmount

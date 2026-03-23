@@ -57,11 +57,11 @@ class FloatingPointUnitAddTest extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
   
-  // "FloatingPointUnit" should "add negative zero with zero" in {
-  //   test(new FloatingPointUnit()) { dut =>
-  //     FloatingPointUnitAddTest(dut, -0.0f, 0.0f)
-  //   }
-  // }
+  "FloatingPointUnit" should "add negative zero with zero" in {
+    test(new FloatingPointUnit()) { dut =>
+      FloatingPointUnitAddTest(dut, -0.0f, 0.0f)
+    }
+  }
   
   // "FloatingPointUnit" should "add zero with negative zero" in {
   //   test(new FloatingPointUnit()) { dut =>
@@ -69,11 +69,11 @@ class FloatingPointUnitAddTest extends AnyFlatSpec with ChiselScalatestTester {
   //   }
   // }
 
-  // "FloatingPointUnit" should "add denormal with denormal" in {
-  //   test(new FloatingPointUnit()) { dut =>
-  //     FloatingPointUnitAddTest(dut, 5.877472e-39f, 2.938736e-39f)
-  //   }
-  // }
+  "FloatingPointUnit" should "add denormal with denormal" in {
+    test(new FloatingPointUnit()) { dut =>
+      FloatingPointUnitAddTest(dut, 5.877472e-39f, 2.938736e-39f)
+    }
+  }
 }
 
 object FloatingPointUnitAddTest {
