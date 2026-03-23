@@ -11,16 +11,19 @@ class FloatingPointUnit extends Module {
   })
 
   val exponentWidth = 8
-  val significandWidth = 24
+  val mantissaWidth = 23
+  val significandWidth = mantissaWidth + 1
 
   // Decode floating points
-  val input1 = FloatingPoint.decode(io.a)
-  val input2 = FloatingPoint.decode(io.b)
+  val decoder1 = Module(new Decoder(exponentWidth, mantissaWidth))
+  val decoder2 = Module(new Decoder(exponentWidth, mantissaWidth))
+  decoder1.io.input := io.a
+  decoder2.io.input := io.b
 
   // Adder
   val adder = Module(new Adder(exponentWidth, significandWidth))
-  adder.io.input1 := input1
-  adder.io.input2 := input2
+  adder.io.input1 := decoder1.io.output
+  adder.io.input2 := decoder2.io.output
 
   // Normalizer
   val normalizer = Module(new Normalizer(exponentWidth, significandWidth))
