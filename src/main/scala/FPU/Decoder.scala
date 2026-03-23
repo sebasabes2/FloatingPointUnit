@@ -18,7 +18,7 @@ class Decoder(exponentWidth: Int, mantissaWidth: Int) extends Module {
   val denormal = exponent === 0.U
 
   io.output.sign := sign
-  io.output.exponent := exponent
+  io.output.exponent := Mux(denormal, 1.U, exponent)
   io.output.significand := !denormal ## mantissa
   io.output.guard := 0.U
   io.output.round := 0.U

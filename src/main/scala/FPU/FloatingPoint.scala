@@ -12,5 +12,4 @@ class FloatingPoint(exponentWidth: Int, significandWidth: Int) extends Bundle {
   val sticky = UInt(1.W)
 
   def significandWithRoundBits(): UInt = significand ## guard ## round ## sticky
-  def encode(): UInt = sign ## exponent ## significand(significandWidth - 2,0) // TODO: subtract bias
 }
