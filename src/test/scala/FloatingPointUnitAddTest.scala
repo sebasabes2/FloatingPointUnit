@@ -13,7 +13,7 @@ class FloatingPointUnitAddTest extends AnyFlatSpec with ChiselScalatestTester {
       FloatingPointUnitAddTest(dut, -0.5f, -1.0f)
     }
   }
-  
+
   "FloatingPointUnit" should "add numbers of similar size and opposite sign" in {
     test(new FloatingPointUnit()) { dut =>
       FloatingPointUnitAddTest(dut, 1.75f, -0.5f)
@@ -50,28 +50,34 @@ class FloatingPointUnitAddTest extends AnyFlatSpec with ChiselScalatestTester {
       FloatingPointUnitAddTest(dut, 5.877472e-38f, 0.0f)
     }
   }
-  
+
   "FloatingPointUnit" should "add zero with zero" in {
     test(new FloatingPointUnit()) { dut =>
       FloatingPointUnitAddTest(dut, 0.0f, 0.0f)
     }
   }
-  
+
   "FloatingPointUnit" should "add negative zero with zero" in {
     test(new FloatingPointUnit()) { dut =>
       FloatingPointUnitAddTest(dut, -0.0f, 0.0f)
     }
   }
-  
-  // "FloatingPointUnit" should "add zero with negative zero" in {
-  //   test(new FloatingPointUnit()) { dut =>
-  //     FloatingPointUnitAddTest(dut, 0.0f, -0.0f)
-  //   }
-  // }
 
-  "FloatingPointUnit" should "add denormal with denormal" in {
+  "FloatingPointUnit" should "add zero with negative zero" in {
     test(new FloatingPointUnit()) { dut =>
-      FloatingPointUnitAddTest(dut, 5.877472e-39f, 2.938736e-39f)
+      FloatingPointUnitAddTest(dut, 0.0f, -0.0f)
+    }
+  }
+
+  "FloatingPointUnit" should "add negative zero with negative zero" in {
+    test(new FloatingPointUnit()) { dut =>
+      FloatingPointUnitAddTest(dut, -0.0f, -0.0f)
+    }
+  }
+
+  "FloatingPointUnit" should "add normal with denormal" in {
+    test(new FloatingPointUnit()) { dut =>
+      FloatingPointUnitAddTest(dut, 2.3693558e-38f, 2.938736e-39f)
     }
   }
 }
