@@ -80,6 +80,24 @@ class FloatingPointUnitAddTest extends AnyFlatSpec with ChiselScalatestTester {
       FloatingPointUnitAddTest(dut, 2.3693558e-38f, 2.938736e-39f)
     }
   }
+
+  "FloatingPointUnit" should "add normal with NaN" in {
+    test(new FloatingPointUnit()) { dut =>
+      FloatingPointUnitAddTest(dut, 3.14f, Float.NaN)
+    }
+  }
+
+  "FloatingPointUnit" should "add NaN with normal" in {
+    test(new FloatingPointUnit()) { dut =>
+      FloatingPointUnitAddTest(dut, Float.NaN, 12.123f)
+    }
+  }
+
+  "FloatingPointUnit" should "add NaN with NaN" in {
+    test(new FloatingPointUnit()) { dut =>
+      FloatingPointUnitAddTest(dut, -Float.NaN, -Float.NaN)
+    }
+  }
 }
 
 object FloatingPointUnitAddTest {

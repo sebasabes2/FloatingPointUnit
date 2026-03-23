@@ -22,7 +22,7 @@ class ExponentMatcher(exponentWidth: Int, significandWidth: Int) extends Module 
 
   val exponentDifference = larger.exponent - smaller.exponent
   io.larger := larger
-  io.smaller.sign := smaller.sign
+  io.smaller := smaller
   io.smaller.exponent := larger.exponent
   val shiftedSignificand = (smaller.significand ## 0.U(significandWidth.W)) >> exponentDifference
   io.smaller.significand := shiftedSignificand(2 * significandWidth - 1, significandWidth)

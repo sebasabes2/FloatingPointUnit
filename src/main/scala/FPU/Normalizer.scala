@@ -27,7 +27,7 @@ class Normalizer(exponentWidth: Int, outputSignificandWidth: Int) extends Module
   val significandNormalizedLeft = io.input.significandWithRoundBits()(outputSignificandWidth + 2, 0) << normalizeLeftAmount
   val significandNormalized = Mux(normalizeRight, significandNormalizedRight, Mux(normalizeLeft, significandNormalizedLeft, io.input.significandWithRoundBits))
   
-  io.output.sign := io.input.sign
+  io.output := io.input
   io.output.exponent := exponentNormalized
   io.output.significand := significandNormalized(outputSignificandWidth + 2,3)
   io.output.guard := significandNormalized(2)

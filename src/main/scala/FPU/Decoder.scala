@@ -1,6 +1,7 @@
 package FloatingPointUnit
 
 import chisel3._
+import math._
 
 class Decoder(exponentWidth: Int, mantissaWidth: Int) extends Module {
   val floatingPointWidth = 1 + exponentWidth + mantissaWidth
@@ -15,12 +16,17 @@ class Decoder(exponentWidth: Int, mantissaWidth: Int) extends Module {
   val exponent = io.input(mantissaWidth + exponentWidth - 1, mantissaWidth) // TODO: add bias
   val mantissa = io.input(mantissaWidth - 1,0)
 
-  val denormal = exponent === 0.U
+  val subnormal = exponent === 0.U
+  val supernormal = exponent === (pow(2, exponentWidth).intValue - 1).U
+  val infinity = supernormal && mantissa === 0.U
+  val nan = supernormal && mantissa =/= 0.U
 
   io.output.sign := sign
-  io.output.exponent := Mux(denormal, 1.U, exponent)
-  io.output.significand := !denormal ## mantissa
+  io.output.exponent := Mux(subnormal, 1.U, exponent)
+  io.output.significand := !subnormal ## mantissa
   io.output.guard := 0.U
   io.output.round := 0.U
   io.output.sticky := 0.U
+  io.output.infinity := infinity
+  io.output.nan := nan
 }

@@ -13,5 +13,6 @@ class Encoder(exponentWidth: Int, mantissaWidth: Int) extends Module {
 
   val denormal = !io.input.significand(significandWidth - 1)
   val exponent = Mux(denormal, 0.U, io.input.exponent)
-  io.output := io.input.sign ## Mux(denormal, 0.U, exponent) ## io.input.significand(significandWidth - 2,0) // TODO: subtract bias
+  val normal = io.input.sign ## Mux(denormal, 0.U, exponent) ## io.input.significand(significandWidth - 2,0) // TODO: subtract bias
+  io.output := Mux(io.input.nan, FloatingPoint.nan(exponentWidth, mantissaWidth), normal)
 }
