@@ -15,9 +15,11 @@ class Decoder(exponentWidth: Int, mantissaWidth: Int) extends Module {
   val exponent = io.input(mantissaWidth + exponentWidth - 1, mantissaWidth) // TODO: add bias
   val mantissa = io.input(mantissaWidth - 1,0)
 
+  val denormal = exponent === 0.U
+
   io.output.sign := sign
   io.output.exponent := exponent
-  io.output.significand := 1.U(1.W) ## mantissa
+  io.output.significand := !denormal ## mantissa
   io.output.guard := 0.U
   io.output.round := 0.U
   io.output.sticky := 0.U

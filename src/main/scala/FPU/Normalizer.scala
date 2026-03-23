@@ -15,16 +15,21 @@ class Normalizer(exponentWidth: Int, outputSignificandWidth: Int) extends Module
   
   val leadingOneDetector = Module(new LeadingOneDetector(outputSignificandWidth))
   leadingOneDetector.io.input := io.input.significand(outputSignificandWidth - 1,0)
+  val normalizeLeft = !leadingOneDetector.io.zero
   val normalizeLeftAmount = (outputSignificandWidth - 1).U - leadingOneDetector.io.position
 
-  io.output.sign := io.input.sign
-  io.output.exponent := Mux(normalizeRight, io.input.exponent + 1.U, io.input.exponent - normalizeLeftAmount)
+  val exponentNormalizedRight = io.input.exponent + 1.U
+  val exponentNormalizedLeft = io.input.exponent - normalizeLeftAmount
+  val exponentNormalized = Mux(normalizeRight, exponentNormalizedRight, Mux(normalizeLeft, exponentNormalizedLeft, io.input.exponent))
 
-  val normalizedRightValue = io.input.significandWithRoundBits()(outputSignificandWidth + 3, 1)
-  val normalizedLeftValue = io.input.significandWithRoundBits()(outputSignificandWidth + 2, 0) << normalizeLeftAmount
-  val normalizedValue = Mux(normalizeRight, normalizedRightValue, normalizedLeftValue)
-  io.output.significand := normalizedValue(outputSignificandWidth + 2,3)
-  io.output.guard := normalizedValue(2)
-  io.output.round := normalizedValue(1)
-  io.output.sticky := normalizedValue(0)
+  val significandNormalizedRight = io.input.significandWithRoundBits()(outputSignificandWidth + 3, 1)
+  val significandNormalizedLeft = io.input.significandWithRoundBits()(outputSignificandWidth + 2, 0) << normalizeLeftAmount
+  val significandNormalized = Mux(normalizeRight, significandNormalizedRight, Mux(normalizeLeft, significandNormalizedLeft, io.input.significandWithRoundBits))
+  
+  io.output.sign := io.input.sign
+  io.output.exponent := exponentNormalized
+  io.output.significand := significandNormalized(outputSignificandWidth + 2,3)
+  io.output.guard := significandNormalized(2)
+  io.output.round := significandNormalized(1)
+  io.output.sticky := significandNormalized(0)
 }
