@@ -39,4 +39,14 @@ class NormalizerTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.output.significand.expect("x800000".U)
     }
   }
+
+  "Normalizer" should "normalize to infinity" in {
+    test(new Normalizer(8, 24)) { dut =>
+      dut.io.input.sign.poke("x1".U)
+      dut.io.input.exponent.poke("xFE".U)
+      dut.io.input.significand.poke("x1000000".U)
+
+      dut.io.output.infinity.expect(true.B)
+    }
+  }
 }

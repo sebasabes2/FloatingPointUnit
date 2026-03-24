@@ -81,20 +81,44 @@ class FloatingPointUnitAddTest extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
 
-  "FloatingPointUnit" should "add normal with NaN" in {
+  "FloatingPointUnit" should "add numbers giving infinity" in {
+    test(new FloatingPointUnit()) { dut =>
+      FloatingPointUnitAddTest(dut, 2.5521177e+38f, 2.5521177e+38f)
+      FloatingPointUnitAddTest(dut, 3.4028234e+38f, 6.246974e+34f)
+      FloatingPointUnitAddTest(dut, -2.5521177e+38f, -2.5521177e+38f)
+      FloatingPointUnitAddTest(dut, -3.4028234e+38f, -6.246974e+34f)
+    }
+  }
+
+  "FloatingPointUnit" should "add numbers with infinity" in {
+    test(new FloatingPointUnit()) { dut =>
+      FloatingPointUnitAddTest(dut, 5.0f, Float.PositiveInfinity)
+      FloatingPointUnitAddTest(dut, Float.PositiveInfinity, 3.14f)
+      FloatingPointUnitAddTest(dut, 5.0f, Float.NegativeInfinity)
+      FloatingPointUnitAddTest(dut, Float.NegativeInfinity, 3.14f)
+      FloatingPointUnitAddTest(dut, Float.PositiveInfinity, Float.PositiveInfinity)
+      FloatingPointUnitAddTest(dut, Float.NegativeInfinity, Float.NegativeInfinity)
+    }
+  }
+
+  "FloatingPointUnit" should "add numbers giving NaN" in {
+    test(new FloatingPointUnit()) { dut =>
+      FloatingPointUnitAddTest(dut, Float.PositiveInfinity, Float.NegativeInfinity)
+      FloatingPointUnitAddTest(dut, Float.NegativeInfinity, Float.PositiveInfinity)
+    }
+  }
+
+  "FloatingPointUnit" should "add numbers with NaN" in {
     test(new FloatingPointUnit()) { dut =>
       FloatingPointUnitAddTest(dut, 3.14f, Float.NaN)
-    }
-  }
-
-  "FloatingPointUnit" should "add NaN with normal" in {
-    test(new FloatingPointUnit()) { dut =>
       FloatingPointUnitAddTest(dut, Float.NaN, 12.123f)
-    }
-  }
-
-  "FloatingPointUnit" should "add NaN with NaN" in {
-    test(new FloatingPointUnit()) { dut =>
+      FloatingPointUnitAddTest(dut, Float.NaN, 0.0f)
+      FloatingPointUnitAddTest(dut, 0.0f, Float.NaN)
+      FloatingPointUnitAddTest(dut, Float.PositiveInfinity, Float.NaN)
+      FloatingPointUnitAddTest(dut, Float.NaN, Float.PositiveInfinity)
+      FloatingPointUnitAddTest(dut, Float.NaN, Float.NaN)
+      FloatingPointUnitAddTest(dut, Float.NaN, -Float.NaN)
+      FloatingPointUnitAddTest(dut, -Float.NaN, Float.NaN)
       FloatingPointUnitAddTest(dut, -Float.NaN, -Float.NaN)
     }
   }

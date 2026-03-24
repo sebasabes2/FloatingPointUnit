@@ -26,5 +26,8 @@ class Adder(exponentWidth: Int, significandWidth: Int) extends Module {
   io.output.round := result(1)
   io.output.sticky := result(0)
 
-  io.output.nan := io.input1.nan || io.input2.nan
+  // Special cases
+  val nanInput = io.input1.nan || io.input2.nan
+  val oppositeInfinity = io.input1.infinity && io.input2.infinity && (io.input1.sign.asBool ^ io.input2.sign.asBool)
+  io.output.nan := nanInput || oppositeInfinity
 }
