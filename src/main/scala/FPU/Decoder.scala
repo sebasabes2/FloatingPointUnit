@@ -1,4 +1,4 @@
-package FloatingPointUnit
+package floatingPointUnit
 
 import chisel3._
 import math._
