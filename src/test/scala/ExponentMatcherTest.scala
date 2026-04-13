@@ -43,4 +43,164 @@ class ExponentMatcherTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.smaller.significand.expect("x400001".U)
     }
   }
+
+  "ExponentMatcher" should "select positive sign" in {
+    test(new ExponentMatcher(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x1".U)
+      dut.io.input1.exponent.poke("x80".U)
+      dut.io.input1.significand.poke("x800000".U)
+
+      dut.io.input2.sign.poke("x0".U)
+      dut.io.input2.exponent.poke("x80".U)
+      dut.io.input2.significand.poke("x800000".U)
+
+      dut.io.larger.sign.expect("x0".U)
+      dut.io.larger.exponent.expect("x80".U)
+      dut.io.larger.significand.expect("x800000".U)
+
+      dut.io.smaller.sign.expect("x1".U)
+      dut.io.smaller.exponent.expect("x80".U)
+      dut.io.smaller.significand.expect("x800000".U)
+    }
+  }
+
+  "ExponentMatcher" should "set smallest bit" in {
+    test(new ExponentMatcher(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x1".U)
+      dut.io.input1.exponent.poke("x80".U)
+      dut.io.input1.significand.poke("x800000".U)
+
+      dut.io.input2.sign.poke("x1".U)
+      dut.io.input2.exponent.poke("x69".U)
+      dut.io.input2.significand.poke("x800000".U)
+
+      dut.io.smaller.sign.expect("x1".U)
+      dut.io.smaller.exponent.expect("x80".U)
+      dut.io.smaller.significand.expect("x000001".U)
+
+      dut.io.smaller.guard.expect("x0".U)
+      dut.io.smaller.round.expect("x0".U)
+      dut.io.smaller.sticky.expect("x0".U)
+    }
+  }
+
+  "ExponentMatcher" should "set guard bit" in {
+    test(new ExponentMatcher(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x1".U)
+      dut.io.input1.exponent.poke("x80".U)
+      dut.io.input1.significand.poke("x800000".U)
+
+      dut.io.input2.sign.poke("x1".U)
+      dut.io.input2.exponent.poke("x68".U)
+      dut.io.input2.significand.poke("x800000".U)
+
+      dut.io.smaller.sign.expect("x1".U)
+      dut.io.smaller.exponent.expect("x80".U)
+      dut.io.smaller.significand.expect("x000000".U)
+
+      dut.io.smaller.guard.expect("x1".U)
+      dut.io.smaller.round.expect("x0".U)
+      dut.io.smaller.sticky.expect("x0".U)
+    }
+  }
+
+  "ExponentMatcher" should "set round bit" in {
+    test(new ExponentMatcher(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x1".U)
+      dut.io.input1.exponent.poke("x80".U)
+      dut.io.input1.significand.poke("x800000".U)
+
+      dut.io.input2.sign.poke("x1".U)
+      dut.io.input2.exponent.poke("x67".U)
+      dut.io.input2.significand.poke("x800000".U)
+
+      dut.io.smaller.sign.expect("x1".U)
+      dut.io.smaller.exponent.expect("x80".U)
+      dut.io.smaller.significand.expect("x000000".U)
+
+      dut.io.smaller.guard.expect("x0".U)
+      dut.io.smaller.round.expect("x1".U)
+      dut.io.smaller.sticky.expect("x0".U)
+    }
+  }
+
+  "ExponentMatcher" should "set sticky bit" in {
+    test(new ExponentMatcher(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x1".U)
+      dut.io.input1.exponent.poke("x80".U)
+      dut.io.input1.significand.poke("x800000".U)
+
+      dut.io.input2.sign.poke("x1".U)
+      dut.io.input2.exponent.poke("x66".U)
+      dut.io.input2.significand.poke("x800000".U)
+
+      dut.io.smaller.sign.expect("x1".U)
+      dut.io.smaller.exponent.expect("x80".U)
+      dut.io.smaller.significand.expect("x000000".U)
+
+      dut.io.smaller.guard.expect("x0".U)
+      dut.io.smaller.round.expect("x0".U)
+      dut.io.smaller.sticky.expect("x1".U)
+    }
+  }
+
+  "ExponentMatcher" should "set smallest bit and sticky bit" in {
+    test(new ExponentMatcher(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x1".U)
+      dut.io.input1.exponent.poke("x80".U)
+      dut.io.input1.significand.poke("x800000".U)
+
+      dut.io.input2.sign.poke("x1".U)
+      dut.io.input2.exponent.poke("x69".U)
+      dut.io.input2.significand.poke("x800001".U)
+
+      dut.io.smaller.sign.expect("x1".U)
+      dut.io.smaller.exponent.expect("x80".U)
+      dut.io.smaller.significand.expect("x000001".U)
+
+      dut.io.smaller.guard.expect("x0".U)
+      dut.io.smaller.round.expect("x0".U)
+      dut.io.smaller.sticky.expect("x1".U)
+    }
+  }
+
+  "ExponentMatcher" should "set guard bit and sticky bit" in {
+    test(new ExponentMatcher(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x1".U)
+      dut.io.input1.exponent.poke("x80".U)
+      dut.io.input1.significand.poke("x800000".U)
+
+      dut.io.input2.sign.poke("x1".U)
+      dut.io.input2.exponent.poke("x68".U)
+      dut.io.input2.significand.poke("x800001".U)
+
+      dut.io.smaller.sign.expect("x1".U)
+      dut.io.smaller.exponent.expect("x80".U)
+      dut.io.smaller.significand.expect("x000000".U)
+
+      dut.io.smaller.guard.expect("x1".U)
+      dut.io.smaller.round.expect("x0".U)
+      dut.io.smaller.sticky.expect("x1".U)
+    }
+  }
+
+  "ExponentMatcher" should "set round bit and sticky bit" in {
+    test(new ExponentMatcher(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x1".U)
+      dut.io.input1.exponent.poke("x80".U)
+      dut.io.input1.significand.poke("x800000".U)
+
+      dut.io.input2.sign.poke("x1".U)
+      dut.io.input2.exponent.poke("x67".U)
+      dut.io.input2.significand.poke("x800001".U)
+
+      dut.io.smaller.sign.expect("x1".U)
+      dut.io.smaller.exponent.expect("x80".U)
+      dut.io.smaller.significand.expect("x000000".U)
+
+      dut.io.smaller.guard.expect("x0".U)
+      dut.io.smaller.round.expect("x1".U)
+      dut.io.smaller.sticky.expect("x1".U)
+    }
+  }
 }

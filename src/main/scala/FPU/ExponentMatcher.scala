@@ -24,9 +24,9 @@ class ExponentMatcher(exponentWidth: Int, significandWidth: Int) extends Module 
   io.larger := larger
   io.smaller := smaller
   io.smaller.exponent := larger.exponent
-  val shiftedSignificand = (smaller.significand ## 0.U(significandWidth.W)) >> exponentDifference
-  io.smaller.significand := shiftedSignificand(2 * significandWidth - 1, significandWidth)
-  io.smaller.guard := shiftedSignificand(significandWidth - 1)
-  io.smaller.round := shiftedSignificand(significandWidth - 2)
-  io.smaller.sticky := shiftedSignificand(significandWidth - 3, 0).orR
+  val shiftedSignificand = (smaller.significand ## 0.U((significandWidth + 1).W)) >> exponentDifference
+  io.smaller.significand := shiftedSignificand(2 * significandWidth, significandWidth + 1)
+  io.smaller.guard := shiftedSignificand(significandWidth)
+  io.smaller.round := shiftedSignificand(significandWidth - 1)
+  io.smaller.sticky := shiftedSignificand(significandWidth - 2, 0).orR || exponentDifference >= (significandWidth + 2).U
 }
