@@ -9,9 +9,12 @@ class Normalizer(exponentWidth: Int, outputSignificandWidth: Int) extends Module
     val output = Output(new FloatingPoint(exponentWidth, outputSignificandWidth))
     val overflow = Output(Bool())
     val underflow = Output(Bool())
+    val zero = Output(Bool())
   })
 
   // TODO: consider making input width parameterizable
+  // TODO: consider removing normalizeLeft muxes, as when this is false
+  //       the significand is zero and thus normalization does no difference
 
   val normalizeRight = io.input.significand(outputSignificandWidth).asBool
   val overflow = normalizeRight && io.input.exponent >= (pow(2, exponentWidth).intValue - 2).U
@@ -41,4 +44,5 @@ class Normalizer(exponentWidth: Int, outputSignificandWidth: Int) extends Module
 
   io.overflow := overflow
   io.underflow := underflow
+  io.zero := !normalizeRight && leadingOneDetector.io.zero
 }

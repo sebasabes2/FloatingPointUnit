@@ -10,6 +10,14 @@ class FloatingPointUnit extends Module {
     val res = Output(UInt(32.W))
   })
 
+  val flags = IO(new Bundle {
+    val overflow = Output(Bool())
+    val underflow = Output(Bool())
+    val zero = Output(Bool())
+    val inexact = Output(Bool())
+    val nan = Output(Bool())
+  })
+
   val exponentWidth = 8
   val mantissaWidth = 23
   val significandWidth = mantissaWidth + 1
@@ -41,6 +49,13 @@ class FloatingPointUnit extends Module {
   val encoder = Module(new Encoder(exponentWidth, mantissaWidth))
   encoder.io.input := renormalizer.io.output
   io.res := encoder.io.output
+
+  // Flags
+  flags.overflow := normalizer.io.overflow || renormalizer.io.overflow
+  flags.underflow := normalizer.io.underflow
+  flags.zero := normalizer.io.zero
+  flags.inexact := rounder.io.inexact
+  flags.nan := adder.io.nan
 }
 
 object FloatingPointUnit extends App {

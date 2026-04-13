@@ -7,6 +7,7 @@ class Adder(exponentWidth: Int, significandWidth: Int) extends Module {
     val input1 = Input(new FloatingPoint(exponentWidth, significandWidth))
     val input2 = Input(new FloatingPoint(exponentWidth, significandWidth))
     val output = Output(new FloatingPoint(exponentWidth, significandWidth + 1))
+    val nan = Output(Bool())
   })
 
   val exponentMatcher = Module(new ExponentMatcher(exponentWidth, significandWidth))
@@ -29,5 +30,8 @@ class Adder(exponentWidth: Int, significandWidth: Int) extends Module {
   // Special cases
   val nanInput = io.input1.nan || io.input2.nan
   val oppositeInfinity = io.input1.infinity && io.input2.infinity && (io.input1.sign.asBool ^ io.input2.sign.asBool)
-  io.output.nan := nanInput || oppositeInfinity
+  val nan = nanInput || oppositeInfinity
+  io.output.nan := nan
+
+  io.nan := nan
 }
