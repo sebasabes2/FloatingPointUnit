@@ -24,9 +24,13 @@ class ExponentMatcher(exponentWidth: Int, significandWidth: Int) extends Module 
   io.larger := larger
   io.smaller := smaller
   io.smaller.exponent := larger.exponent
-  val shiftedSignificand = (smaller.significand ## 0.U((significandWidth + 1).W)) >> exponentDifference
-  io.smaller.significand := shiftedSignificand(2 * significandWidth, significandWidth + 1)
-  io.smaller.guard := shiftedSignificand(significandWidth)
-  io.smaller.round := shiftedSignificand(significandWidth - 1)
-  io.smaller.sticky := shiftedSignificand(significandWidth - 2, 0).orR || exponentDifference >= (significandWidth + 2).U
+  val shiftedSignificand = (smaller.significand ## 0.U(2.W)) >> exponentDifference
+  io.smaller.significand := shiftedSignificand(significandWidth + 1, 2)
+  io.smaller.guard := shiftedSignificand(1)
+  io.smaller.round := shiftedSignificand(0)
+
+  val stickyBitDetector = Module(new StickyBitDetector(significandWidth + 2))
+  stickyBitDetector.io.input := smaller.significand ## 0.U(2.W)
+  stickyBitDetector.io.shift := exponentDifference
+  io.smaller.sticky := stickyBitDetector.io.sticky || exponentDifference >= (significandWidth + 2).U
 }
