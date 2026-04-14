@@ -4,32 +4,25 @@ import chisel3._
 
 class Adder(exponentWidth: Int, significandWidth: Int) extends Module {
   val io = IO(new Bundle {
-    val input1 = Input(new FloatingPoint(exponentWidth, significandWidth))
-    val input2 = Input(new FloatingPoint(exponentWidth, significandWidth))
+    val larger = Input(new FloatingPoint(exponentWidth, significandWidth))
+    val smaller = Input(new FloatingPoint(exponentWidth, significandWidth))
     val output = Output(new FloatingPoint(exponentWidth, significandWidth + 1))
     val nan = Output(Bool())
   })
 
-  val exponentMatcher = Module(new ExponentMatcher(exponentWidth, significandWidth))
-  exponentMatcher.io.input1 := io.input1
-  exponentMatcher.io.input2 := io.input2
-
-  val larger = exponentMatcher.io.larger
-  val smaller = exponentMatcher.io.smaller
-
-  val addition = larger.significandWithRoundBits() +& smaller.significandWithRoundBits()
-  val subtraction = larger.significandWithRoundBits() - smaller.significandWithRoundBits()
-  val effectiveOperation = larger.sign === smaller.sign
+  val addition = io.larger.significandWithRoundBits() +& io.smaller.significandWithRoundBits()
+  val subtraction = io.larger.significandWithRoundBits() - io.smaller.significandWithRoundBits()
+  val effectiveOperation = io.larger.sign === io.smaller.sign
   val result = Mux(effectiveOperation, addition, subtraction)
-  io.output := larger
+  io.output := io.larger
   io.output.significand := result(significandWidth + 3,3)
   io.output.guard := result(2)
   io.output.round := result(1)
   io.output.sticky := result(0)
 
   // Special cases
-  val nanInput = io.input1.nan || io.input2.nan
-  val oppositeInfinity = io.input1.infinity && io.input2.infinity && (io.input1.sign.asBool ^ io.input2.sign.asBool)
+  val nanInput = io.larger.nan || io.smaller.nan
+  val oppositeInfinity = io.larger.infinity && io.smaller.infinity && (io.larger.sign.asBool ^ io.smaller.sign.asBool)
   val nan = nanInput || oppositeInfinity
   io.output.nan := nan
 

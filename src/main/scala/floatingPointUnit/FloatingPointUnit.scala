@@ -28,10 +28,15 @@ class FloatingPointUnit extends Module {
   decoder1.io.input := io.a
   decoder2.io.input := io.b
 
+  // ExponentMatcher
+  val exponentMatcher = Module(new ExponentMatcher(exponentWidth, significandWidth))
+  exponentMatcher.io.input1 := decoder1.io.output
+  exponentMatcher.io.input2 := decoder2.io.output
+
   // Adder
   val adder = Module(new Adder(exponentWidth, significandWidth))
-  adder.io.input1 := decoder1.io.output
-  adder.io.input2 := decoder2.io.output
+  adder.io.larger := exponentMatcher.io.larger
+  adder.io.smaller := exponentMatcher.io.smaller
 
   // Normalizer
   val normalizer = Module(new Normalizer(exponentWidth, significandWidth))
