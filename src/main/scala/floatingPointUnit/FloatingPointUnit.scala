@@ -30,37 +30,37 @@ class FloatingPointUnit extends Module {
 
   // ExponentMatcher
   val exponentMatcher = Module(new ExponentMatcher(exponentWidth, significandWidth))
-  exponentMatcher.io.input1 := decoder1.io.output
-  exponentMatcher.io.input2 := decoder2.io.output
+  exponentMatcher.io.input1 := RegNext(decoder1.io.output)
+  exponentMatcher.io.input2 := RegNext(decoder2.io.output)
 
   // Adder
   val adder = Module(new Adder(exponentWidth, significandWidth))
-  adder.io.larger := exponentMatcher.io.larger
-  adder.io.smaller := exponentMatcher.io.smaller
+  adder.io.larger := RegNext(exponentMatcher.io.larger)
+  adder.io.smaller := RegNext(exponentMatcher.io.smaller)
 
   // Normalizer
   val normalizer = Module(new Normalizer(exponentWidth, significandWidth))
-  normalizer.io.input := adder.io.output
+  normalizer.io.input := RegNext(adder.io.output)
 
   // Rounder
   val rounder = Module(new Rounder(exponentWidth, significandWidth))
-  rounder.io.input := normalizer.io.output
+  rounder.io.input := RegNext(normalizer.io.output)
 
   // Renormalizer
   val renormalizer = Module(new Normalizer(exponentWidth, significandWidth))
-  renormalizer.io.input := rounder.io.output
+  renormalizer.io.input := RegNext(rounder.io.output)
 
   // Encode output
   val encoder = Module(new Encoder(exponentWidth, mantissaWidth))
-  encoder.io.input := renormalizer.io.output
+  encoder.io.input := RegNext(renormalizer.io.output)
   io.res := encoder.io.output
 
   // Flags
-  flags.overflow := normalizer.io.overflow || renormalizer.io.overflow
-  flags.underflow := normalizer.io.underflow
-  flags.zero := normalizer.io.zero
-  flags.inexact := rounder.io.inexact
-  flags.nan := adder.io.nan
+  flags.overflow := RegNext(RegNext(RegNext(normalizer.io.overflow))) || RegNext(renormalizer.io.overflow)
+  flags.underflow := RegNext(RegNext(RegNext(normalizer.io.underflow)))
+  flags.zero := RegNext(RegNext(RegNext(normalizer.io.zero)))
+  flags.inexact := RegNext(RegNext(rounder.io.inexact))
+  flags.nan := RegNext(RegNext(RegNext(RegNext(adder.io.nan))))
 }
 
 object FloatingPointUnit extends App {
