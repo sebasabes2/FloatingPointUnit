@@ -89,8 +89,8 @@ class RounderTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.input.sticky.poke("x0".U)
 
       dut.io.output.sign.expect("x1".U)
-      dut.io.output.exponent.expect("x80".U)
-      dut.io.output.significand.expect("x1000000".U)
+      dut.io.output.exponent.expect("x81".U)
+      dut.io.output.significand.expect("x800000".U)
     }
   }
 }
