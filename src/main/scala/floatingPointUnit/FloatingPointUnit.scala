@@ -40,9 +40,9 @@ class FloatingPointUnit extends Module {
 
   // Adder
   val adder = Module(new Adder(exponentWidth, significandWidth))
-  adder.io.input1 := RegNext(preAdder.io.input1)
-  adder.io.input2 := RegNext(preAdder.io.input2)
-  adder.io.subtract := RegNext(preAdder.io.subtract)
+  adder.io.input1 := preAdder.io.input1
+  adder.io.input2 := preAdder.io.input2
+  adder.io.subtract := preAdder.io.subtract
 
   // Normalizer
   val normalizer = Module(new Normalizer(exponentWidth, significandWidth))
@@ -52,19 +52,15 @@ class FloatingPointUnit extends Module {
   val rounder = Module(new Rounder(exponentWidth, significandWidth))
   rounder.io.input := RegNext(normalizer.io.output)
 
-  // Renormalizer
-  val renormalizer = Module(new Normalizer(exponentWidth, significandWidth))
-  renormalizer.io.input := RegNext(rounder.io.output)
-
   // Encode output
   val encoder = Module(new Encoder(exponentWidth, mantissaWidth))
-  encoder.io.input := RegNext(renormalizer.io.output)
+  encoder.io.input := rounder.io.output
   io.res := encoder.io.output
 
   // Flags
-  flags.overflow := RegNext(RegNext(RegNext(normalizer.io.overflow))) || RegNext(renormalizer.io.overflow)
-  flags.underflow := RegNext(RegNext(RegNext(normalizer.io.underflow)))
-  flags.zero := RegNext(RegNext(RegNext(normalizer.io.zero)))
-  flags.inexact := RegNext(RegNext(rounder.io.inexact))
-  flags.nan := RegNext(RegNext(RegNext(RegNext(adder.io.nan))))
+  flags.overflow := RegNext(normalizer.io.overflow) || rounder.io.overflow
+  flags.underflow := RegNext(normalizer.io.underflow)
+  flags.zero := RegNext(normalizer.io.zero)
+  flags.inexact := rounder.io.inexact
+  flags.nan := RegNext(adder.io.nan)
 }
