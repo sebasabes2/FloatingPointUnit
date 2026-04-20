@@ -10,10 +10,10 @@ class Adder(exponentWidth: Int, significandWidth: Int) extends Module {
     val nan = Output(Bool())
   })
 
-  val addition = io.larger.significandWithRoundBits() +& io.smaller.significandWithRoundBits()
-  val subtraction = io.larger.significandWithRoundBits() - io.smaller.significandWithRoundBits()
-  val effectiveOperation = io.larger.sign === io.smaller.sign
-  val result = Mux(effectiveOperation, addition, subtraction)
+  val subtract = io.larger.sign.asBool ^ io.smaller.sign.asBool
+  val larger = io.larger.significandWithRoundBits()
+  val smaller = Mux(subtract, 1.U(1.W) ## ~io.smaller.significandWithRoundBits(), io.smaller.significandWithRoundBits())
+  val result = larger + smaller + subtract.asUInt()
   io.output := io.larger
   io.output.significand := result(significandWidth + 3,3)
   io.output.guard := result(2)
