@@ -4,25 +4,23 @@ import chisel3._
 
 class Adder(exponentWidth: Int, significandWidth: Int) extends Module {
   val io = IO(new Bundle {
-    val larger = Input(new FloatingPoint(exponentWidth, significandWidth))
-    val smaller = Input(new FloatingPoint(exponentWidth, significandWidth))
+    val input1 = Input(new FloatingPoint(exponentWidth, significandWidth + 3))
+    val input2 = Input(new FloatingPoint(exponentWidth, significandWidth + 3))
+    val subtract = Input(Bool())
     val output = Output(new FloatingPoint(exponentWidth, significandWidth + 1))
     val nan = Output(Bool())
   })
 
-  val subtract = io.larger.sign.asBool ^ io.smaller.sign.asBool
-  val larger = io.larger.significandWithRoundBits()
-  val smaller = Mux(subtract, 1.U(1.W) ## ~io.smaller.significandWithRoundBits(), io.smaller.significandWithRoundBits())
-  val result = larger + smaller + subtract.asUInt()
-  io.output := io.larger
-  io.output.significand := result(significandWidth + 3,3)
+  val result = io.input1.significand +& io.input2.significand +& io.subtract.asUInt
+  io.output := io.input1
+  io.output.significand := Mux(io.subtract, result(significandWidth + 2,3), result(significandWidth + 3,3))
   io.output.guard := result(2)
   io.output.round := result(1)
   io.output.sticky := result(0)
 
   // Special cases
-  val nanInput = io.larger.nan || io.smaller.nan
-  val oppositeInfinity = io.larger.infinity && io.smaller.infinity && (io.larger.sign.asBool ^ io.smaller.sign.asBool)
+  val nanInput = io.input1.nan || io.input2.nan
+  val oppositeInfinity = io.input1.infinity && io.input2.infinity && (io.input1.sign.asBool ^ io.input2.sign.asBool)
   val nan = nanInput || oppositeInfinity
   io.output.nan := nan
 

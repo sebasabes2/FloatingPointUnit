@@ -30,17 +30,23 @@ class FloatingPointUnit extends Module {
 
   // ExponentMatcher
   val exponentMatcher = Module(new ExponentMatcher(exponentWidth, significandWidth))
-  exponentMatcher.io.input1 := RegNext(decoder1.io.output)
-  exponentMatcher.io.input2 := RegNext(decoder2.io.output)
+  exponentMatcher.io.input1 := decoder1.io.output
+  exponentMatcher.io.input2 := decoder2.io.output
+
+  // PreAdder
+  val preAdder = Module(new PreAdder(exponentWidth, significandWidth))
+  preAdder.io.larger := exponentMatcher.io.larger
+  preAdder.io.smaller := exponentMatcher.io.smaller
 
   // Adder
   val adder = Module(new Adder(exponentWidth, significandWidth))
-  adder.io.larger := RegNext(exponentMatcher.io.larger)
-  adder.io.smaller := RegNext(exponentMatcher.io.smaller)
+  adder.io.input1 := RegNext(preAdder.io.input1)
+  adder.io.input2 := RegNext(preAdder.io.input2)
+  adder.io.subtract := RegNext(preAdder.io.subtract)
 
   // Normalizer
   val normalizer = Module(new Normalizer(exponentWidth, significandWidth))
-  normalizer.io.input := RegNext(adder.io.output)
+  normalizer.io.input := adder.io.output
 
   // Rounder
   val rounder = Module(new Rounder(exponentWidth, significandWidth))
@@ -61,8 +67,4 @@ class FloatingPointUnit extends Module {
   flags.zero := RegNext(RegNext(RegNext(normalizer.io.zero)))
   flags.inexact := RegNext(RegNext(rounder.io.inexact))
   flags.nan := RegNext(RegNext(RegNext(RegNext(adder.io.nan))))
-}
-
-object FloatingPointUnit extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new FloatingPointUnit)
 }
