@@ -14,6 +14,8 @@ class AdderTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.input2.exponent.poke("x80".U)
       dut.io.input2.significand.poke("x4000000".U)
 
+      dut.clock.step(1)
+
       dut.io.output.sign.expect("x1".U)
       dut.io.output.exponent.expect("x80".U)
       dut.io.output.significand.expect("x1000000".U)
@@ -34,6 +36,8 @@ class AdderTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.input2.sign.poke("x1".U)
       dut.io.input2.exponent.poke("x80".U)
       dut.io.input2.significand.poke("x400000".U)
+
+      dut.clock.step(1)
 
       dut.io.output.sign.expect("x1".U)
       dut.io.output.exponent.expect("x80".U)
@@ -56,6 +60,8 @@ class AdderTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.input2.exponent.poke("x80".U)
       dut.io.input2.significand.poke("x0000007".U)
 
+      dut.clock.step(1)
+
       dut.io.output.sign.expect("x1".U)
       dut.io.output.exponent.expect("x80".U)
       dut.io.output.significand.expect("x800000".U)
@@ -77,6 +83,8 @@ class AdderTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.input2.exponent.poke("xFE".U)
       dut.io.input2.significand.poke("x000001".U)
 
+      dut.clock.step(1)
+
       dut.io.output.sign.expect("x1".U)
       dut.io.output.exponent.expect("xFE".U)
       dut.io.output.significand.expect("x800000".U)
@@ -92,14 +100,17 @@ class AdderTest extends AnyFlatSpec with ChiselScalatestTester {
     test(new Adder(8, 24)) { dut =>
       dut.io.input1.nan.poke(true.B)
       dut.io.input2.nan.poke(false.B)
+      dut.clock.step(1)
       dut.io.output.nan.expect(true.B)
 
       dut.io.input1.nan.poke(false.B)
       dut.io.input2.nan.poke(true.B)
+      dut.clock.step(1)
       dut.io.output.nan.expect(true.B)
 
       dut.io.input1.nan.poke(true.B)
       dut.io.input2.nan.poke(true.B)
+      dut.clock.step(1)
       dut.io.output.nan.expect(true.B)
 
       dut.io.input1.nan.poke(false.B)
@@ -108,6 +119,7 @@ class AdderTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.input2.nan.poke(false.B)
       dut.io.input2.infinity.poke(true.B)
       dut.io.input2.sign.poke("x1".U)
+      dut.clock.step(1)
       dut.io.output.nan.expect(true.B)
     }
   }

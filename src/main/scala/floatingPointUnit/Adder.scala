@@ -11,9 +11,11 @@ class Adder(exponentWidth: Int, significandWidth: Int) extends Module {
     val nan = Output(Bool())
   })
 
-  val result = io.input1.significand +& io.input2.significand +& io.subtract.asUInt
-  io.output := io.input1
-  io.output.significand := Mux(io.subtract, result(significandWidth + 2,3), result(significandWidth + 3,3))
+  val firstStep = RegNext(io.input1.significand(7,0) +& io.input2.significand(7,0) +& io.subtract.asUInt)
+  val secondStep = RegNext(io.input1.significand(significandWidth + 2, 8)) +& RegNext(io.input2.significand(significandWidth + 2, 8)) +& firstStep(8)
+  val result = secondStep ## firstStep(7,0)
+  io.output := RegNext(io.input1)
+  io.output.significand := Mux(RegNext(io.subtract), result(significandWidth + 2,3), result(significandWidth + 3,3))
   io.output.guard := result(2)
   io.output.round := result(1)
   io.output.sticky := result(0)
