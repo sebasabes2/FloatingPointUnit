@@ -15,11 +15,11 @@ class LeadingOneDetector(size: Int) extends Module {
     io.position := 0.U
     io.zero := !io.input(0)
   } else if (size == 2) {
-    io.position := io.input(1)
+    io.position := !io.input(1)
     io.zero := !io.input(1) && !io.input(0)
   } else {
-    val lowerSize = pow(2, (log2Up(size) - 1)).intValue
-    val higherSize = size - lowerSize
+    val higherSize = pow(2, (log2Up(size) - 1)).intValue
+    val lowerSize = size - higherSize
 
     val lower = Module(new LeadingOneDetector(lowerSize))
     val higher = Module(new LeadingOneDetector(higherSize))
@@ -27,7 +27,7 @@ class LeadingOneDetector(size: Int) extends Module {
     lower.io.input := io.input(lowerSize - 1, 0)
     higher.io.input := io.input(size - 1, lowerSize)
 
-    io.position := !higher.io.zero ## Mux(higher.io.zero, lower.io.position, higher.io.position)
+    io.position := higher.io.zero ## Mux(higher.io.zero, lower.io.position, higher.io.position)
     io.zero := lower.io.zero && higher.io.zero
   }
 }

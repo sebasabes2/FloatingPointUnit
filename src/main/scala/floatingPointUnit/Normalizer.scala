@@ -13,26 +13,22 @@ class Normalizer(exponentWidth: Int, outputSignificandWidth: Int) extends Module
   })
 
   // TODO: consider making input width parameterizable
-  // TODO: consider removing normalizeLeft muxes, as when this is false
-  //       the significand is zero and thus normalization does no difference
 
   val normalizeRight = io.input.significand(outputSignificandWidth).asBool
   val overflow = normalizeRight && io.input.exponent >= (pow(2, exponentWidth).intValue - 2).U
 
   val leadingOneDetector = Module(new LeadingOneDetector(outputSignificandWidth))
   leadingOneDetector.io.input := io.input.significand(outputSignificandWidth - 1,0)
-  val normalizeLeft = !leadingOneDetector.io.zero
-  val idealNormalizeLeftAmount = (outputSignificandWidth - 1).U - leadingOneDetector.io.position
-  val underflow = idealNormalizeLeftAmount >= io.input.exponent
-  val normalizeLeftAmount = Mux(underflow, io.input.exponent - 1.U, idealNormalizeLeftAmount)
+  val underflow = leadingOneDetector.io.position >= io.input.exponent
+  val normalizeLeftAmount = Mux(underflow, io.input.exponent - 1.U, leadingOneDetector.io.position)
 
   val exponentNormalizedRight = io.input.exponent + 1.U
   val exponentNormalizedLeft = io.input.exponent - normalizeLeftAmount
-  val exponentNormalized = Mux(normalizeRight, exponentNormalizedRight, Mux(normalizeLeft, exponentNormalizedLeft, io.input.exponent))
+  val exponentNormalized = Mux(normalizeRight, exponentNormalizedRight, exponentNormalizedLeft)
 
   val significandNormalizedRight = io.input.significandWithRoundBits()(outputSignificandWidth + 3, 1)
   val significandNormalizedLeft = io.input.significandWithRoundBits()(outputSignificandWidth + 2, 0) << normalizeLeftAmount
-  val significandNormalized = Mux(normalizeRight, significandNormalizedRight, Mux(normalizeLeft, significandNormalizedLeft, io.input.significandWithRoundBits))
+  val significandNormalized = Mux(normalizeRight, significandNormalizedRight, significandNormalizedLeft)
 
   io.output := io.input
   io.output.exponent := exponentNormalized
