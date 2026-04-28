@@ -27,14 +27,17 @@ class TestData {
   var input2: Float = 3.14f
   var output: Float = 3.14f
 
+  var file: String = ""
+  var line: Integer = -1
+
   override def toString = {
     f"operation: $operation, rounding mode: $roundingMode, exceptions: $exceptions, input1: $input1, input2: $input2, output: $output"
   }
 }
 
-object TestSuite {
-  def run(dut: FloatingPointUnit, testDir: String) = {
-    runTestFile(getTestFiles(testDir)(0)) // substitute with foreach
+object TestParser {
+  def getAllTests(testDir: String): List[TestData] = {
+    getTestsFromFile(getTestFiles(testDir)(0)) // substitute with foreach
   }
 
   def getTestFiles(dir: String): List[String] = {
@@ -44,14 +47,13 @@ object TestSuite {
       .map(_.getPath).toList
   }
 
-  def runTestFile(path: String) = {
-    println("Running test file: " + path)
-    Source.fromFile(path).getLines.drop(4).foreach(runTestLine) // change with foreach
+  def getTestsFromFile(path: String): List[TestData] = {
+    Source.fromFile(path).getLines.drop(4).map(getTestFromLine).toList
   }
 
-  def runTestLine(line: String) = {
+  def getTestFromLine(line: String): TestData = {
     parseTestLine(line) match {
-      case Some(testData) => println(testData)
+      case Some(testData) => return testData
       case None => throw new Exception(f"unable to parse test line: $line")
     }
   }
@@ -151,9 +153,7 @@ object TestSuite {
 class TestSuite extends AnyFlatSpec with ChiselScalatestTester {
   "FloatingPointUnit" should "pass test suite" in {
     test(new FloatingPointUnit) { dut =>
-      println("Test")
-      println(TestSuite.run(dut, "ieee754-test-suite"))
-      println(new File(".").getAbsolutePath)
+      val tests = TestParser.getAllTests("ieee754-test-suite")
     }
   }
 }
