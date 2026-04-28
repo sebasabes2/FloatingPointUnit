@@ -48,20 +48,26 @@ object TestParser {
   }
 
   def getTestsFromFile(path: String): List[TestData] = {
-    Source.fromFile(path).getLines.drop(4).map(getTestFromLine).toList
+    var lineIndex = 4
+    Source.fromFile(path).getLines.drop(4).map(line => {
+      lineIndex += 1
+      getTestFromLine(path, lineIndex, line)
+    }).toList
   }
 
-  def getTestFromLine(line: String): TestData = {
-    parseTestLine(line) match {
+  def getTestFromLine(path: String, lineIndex: Integer, line: String): TestData = {
+    parseTestLine(path, lineIndex, line) match {
       case Some(testData) => return testData
       case None => throw new Exception(f"unable to parse test line: $line")
     }
   }
 
-  def parseTestLine(line: String): Option[TestData] = {
+  def parseTestLine(path: String, lineIndex: Integer, line: String): Option[TestData] = {
     val parts = line.split(" ").iterator
     var next: String = parts.next
     var data = new TestData
+    data.file = path
+    data.line = lineIndex
     // Parse operation
     if (next == "b32+" || next == "b32-") {
       data.operation = next
@@ -177,7 +183,7 @@ object TestRunner {
     println(f"[info]   $skipped/${tests.length} skipped")
     if (failed != 0) {
       println(f"[${Console.RED}error${Console.WHITE}] Test suite failed")
-      println(f"[${Console.RED}error${Console.WHITE}] First test to fail was [TODO]")
+      println(f"[${Console.RED}error${Console.WHITE}] First test to fail was ${firstFail.file}:${firstFail.line}")
       println(f"[${Console.RED}error${Console.WHITE}] ${firstFail.toString}")
       runTest(dut, firstFail, silent=false)
     }
