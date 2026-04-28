@@ -23,15 +23,18 @@ class TestData {
     (if (invalid) "i" else "")
   }
 
-  var input1: Float = 3.14f
-  var input2: Float = 3.14f
-  var output: Float = 3.14f
+  var input1 = Float.NaN
+  var input2 = Float.NaN
+  var hasInput2 = false
+  var input3 = Float.NaN
+  var hasInput3 = false
+  var output = Float.NaN
 
   var file: String = ""
   var line: Integer = -1
 
   override def toString = {
-    f"operation: $operation, rounding mode: $roundingMode, exceptions: $exceptions, input1: $input1, input2: $input2, output: $output"
+    f"operation: $operation, rounding mode: $roundingMode, exceptions: $exceptions, input1: $input1${if (hasInput2) f", input2: $input2" else ""}${if (hasInput3) f", input3: $input3" else ""}, output: $output"
   }
 }
 
@@ -69,7 +72,7 @@ object TestParser {
     data.file = path
     data.line = lineIndex
     // Parse operation
-    if (next == "b32+" || next == "b32-") {
+    if (next == "b32+" || next == "b32-" || next == "b32*+") {
       data.operation = next
       next = parts.next;
     } else {
@@ -86,7 +89,7 @@ object TestParser {
     if (parseExceptions(next, data)) {
       next = parts.next
     }
-    // Parse input 1
+    // Parse input 1. This input is mandatory
     parseFloat(next) match {
       case Some(float) => {
         data.input1 = float
@@ -98,9 +101,19 @@ object TestParser {
     parseFloat(next) match {
       case Some(float) => {
         data.input2 = float
+        data.hasInput2 = true
         next = parts.next;
       }
-      case None => return None
+      case None => 
+    }
+    // Parse input 3
+    parseFloat(next) match {
+      case Some(float) => {
+        data.input3 = float
+        data.hasInput3 = true
+        next = parts.next;
+      }
+      case None => 
     }
     // Parse '->'
     if (next == "->") {
@@ -151,6 +164,13 @@ object TestParser {
       val bits = (if (sign == "+") 0 else 0x80000000) + (exponent << 23) + mantissa
       val float = java.lang.Float.intBitsToFloat(bits) 
       return Some(float)
+    } else {
+      if (rest == "Zero") {
+        return Some(if (sign == "+") 0.0f else -0.0f)
+      }
+      if (rest == "Inf") {
+        return Some(if (sign == "+") Float.PositiveInfinity else Float.NegativeInfinity)
+      }
     }
     return None
   }
@@ -182,9 +202,9 @@ object TestRunner {
     println(f"[info]   $failed/${tests.length} failed")
     println(f"[info]   $skipped/${tests.length} skipped")
     if (failed != 0) {
-      println(f"[${Console.RED}error${Console.WHITE}] Test suite failed")
-      println(f"[${Console.RED}error${Console.WHITE}] First test to fail was ${firstFail.file}:${firstFail.line}")
-      println(f"[${Console.RED}error${Console.WHITE}] ${firstFail.toString}")
+      println(f"[${Console.RED}error${Console.RESET}] Test suite failed")
+      println(f"[${Console.RED}error${Console.RESET}] First test to fail was ${firstFail.file}:${firstFail.line}")
+      println(f"[${Console.RED}error${Console.RESET}] ${firstFail.toString}")
       runTest(dut, firstFail, silent=false)
     }
   }
