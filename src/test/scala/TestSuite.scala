@@ -150,10 +150,65 @@ object TestParser {
   }
 }
 
+class TestResult {
+  var passed = false
+  var failed = false
+  var skipped = false
+}
+
+object TestRunner {
+  def runTests(dut: FloatingPointUnit, tests: List[TestData]) {
+    val iterator = tests.iterator
+    var passed = 0
+    var failed = 0
+    var skipped = 0
+    var firstFail = tests(0)
+    while (iterator.hasNext) {
+      val test = iterator.next
+      val result = runTest(dut, test)
+      if (result.failed && failed == 0) { firstFail = test }
+      if (result.passed) { passed += 1 }
+      if (result.failed) { failed += 1 }
+      if (result.skipped) { skipped += 1 }
+    }
+    println(f"[info] Test suite result:")
+    println(f"[info]   $passed/${tests.length} passed")
+    println(f"[info]   $failed/${tests.length} failed")
+    println(f"[info]   $skipped/${tests.length} skipped")
+    if (failed != 0) {
+      println(f"[${Console.RED}error${Console.WHITE}] Test suite failed")
+      println(f"[${Console.RED}error${Console.WHITE}] First test to fail was [TODO]")
+      println(f"[${Console.RED}error${Console.WHITE}] ${firstFail.toString}")
+      runTest(dut, firstFail, silent=false)
+    }
+  }
+
+  def runTest(dut: FloatingPointUnit, test: TestData, silent: Boolean = true): TestResult = {
+    val input1 = ("x" + java.lang.Float.floatToIntBits(test.input1).toHexString).U
+    val input2 = ("x" + java.lang.Float.floatToIntBits(test.input2).toHexString).U
+    val expectedOutput = ("x" + java.lang.Float.floatToIntBits(test.output).toHexString).U
+    dut.io.a.poke(input1)
+    dut.io.b.poke(input2)
+    dut.clock.step(6)
+    if (!silent) {
+      dut.io.res.expect(expectedOutput)
+    }
+    val output = dut.io.res.peek
+    val result = new TestResult
+    if (output.litValue.toInt == expectedOutput.litValue.toInt) {
+      result.passed = true
+    } else {
+      result.failed = true
+    }
+    return result
+  }
+}
+
 class TestSuite extends AnyFlatSpec with ChiselScalatestTester {
   "FloatingPointUnit" should "pass test suite" in {
     test(new FloatingPointUnit) { dut =>
       val tests = TestParser.getAllTests("ieee754-test-suite")
+      TestRunner.runTests(dut, tests)
     }
   }
 }
