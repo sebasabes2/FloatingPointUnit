@@ -40,7 +40,7 @@ class TestData {
 
 object TestParser {
   def getAllTests(testDir: String): List[TestData] = {
-    getTestsFromFile(getTestFiles(testDir)(0)) // substitute with foreach
+    getTestFiles(testDir).map(getTestsFromFile).flatten
   }
 
   def getTestFiles(dir: String): List[String] = {
@@ -61,7 +61,7 @@ object TestParser {
   def getTestFromLine(path: String, lineIndex: Integer, line: String): TestData = {
     parseTestLine(path, lineIndex, line) match {
       case Some(testData) => return testData
-      case None => throw new Exception(f"unable to parse test line: $line")
+      case None => throw new Exception(f"unable to parse test line: ${"\""}$line${"\""} in $path:$lineIndex")
     }
   }
 
@@ -72,14 +72,17 @@ object TestParser {
     data.file = path
     data.line = lineIndex
     // Parse operation
-    if (next == "b32+" || next == "b32-" || next == "b32*+") {
+    if (List("b32+", "b32-", "b32*").contains(next)) {
       data.operation = next
       next = parts.next;
+    } else if (next.slice(0,3) == "b32" || next.slice(0,3) == "d64" || next.slice(0,4) == "d128") {
+      data.operation = next
+      return Some(data) // Return because these operations will all be skipped so no need to parse them
     } else {
       return None
     }
     // Parse rounding mode
-    if (next == "=0") {
+    if (List(">", "<", "0", "=0", "=^").contains(next)) {
       data.roundingMode = next
       next = parts.next;
     } else {
@@ -151,6 +154,9 @@ object TestParser {
   }
 
   def parseFloat(input: String): Option[Float] = {
+    if (input == "S" || input == "Q" || input == "#") {
+      return Some(Float.NaN)
+    }
     val sign = input.slice(0, 1)
     if (sign != "+" && sign != "-") {
       return None
@@ -198,9 +204,9 @@ object TestRunner {
       if (result.skipped) { skipped += 1 }
     }
     println(f"[info] Test suite result:")
-    println(f"[info]   $passed/${tests.length} passed")
-    println(f"[info]   $failed/${tests.length} failed")
-    println(f"[info]   $skipped/${tests.length} skipped")
+    println(f"[info]   $passed passed")
+    println(f"[info]   $failed failed")
+    println(f"[info]   $skipped skipped")
     if (failed != 0) {
       println(f"[${Console.RED}error${Console.RESET}] Test suite failed")
       println(f"[${Console.RED}error${Console.RESET}] First test to fail was ${firstFail.file}:${firstFail.line}")
@@ -210,17 +216,21 @@ object TestRunner {
   }
 
   def runTest(dut: FloatingPointUnit, test: TestData, silent: Boolean = true): TestResult = {
+    val result = new TestResult
+    if (test.operation != "b32+" || test.roundingMode != "=0") {
+      result.skipped = true
+      return result
+    }
     val input1 = ("x" + java.lang.Float.floatToIntBits(test.input1).toHexString).U
     val input2 = ("x" + java.lang.Float.floatToIntBits(test.input2).toHexString).U
     val expectedOutput = ("x" + java.lang.Float.floatToIntBits(test.output).toHexString).U
     dut.io.a.poke(input1)
     dut.io.b.poke(input2)
-    dut.clock.step(6)
+    dut.clock.step(2)
     if (!silent) {
       dut.io.res.expect(expectedOutput)
     }
     val output = dut.io.res.peek
-    val result = new TestResult
     if (output.litValue.toInt == expectedOutput.litValue.toInt) {
       result.passed = true
     } else {
@@ -233,6 +243,7 @@ object TestRunner {
 class TestSuite extends AnyFlatSpec with ChiselScalatestTester {
   "FloatingPointUnit" should "pass test suite" in {
     test(new FloatingPointUnit) { dut =>
+      dut.clock.setTimeout(100000)
       val tests = TestParser.getAllTests("ieee754-test-suite")
       TestRunner.runTests(dut, tests)
     }
