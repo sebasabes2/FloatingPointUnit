@@ -30,8 +30,8 @@ class TestData {
   var hasInput3 = false
   var output = Float.NaN
 
-  var file: String = ""
-  var line: Integer = -1
+  var line: String = ""
+  var path: String = ""
 
   override def toString = {
     f"operation: $operation, rounding mode: $roundingMode, exceptions: $exceptions, input1: $input1${if (hasInput2) f", input2: $input2" else ""}${if (hasInput3) f", input3: $input3" else ""}, output: $output"
@@ -54,23 +54,23 @@ object TestParser {
     var lineIndex = 4
     Source.fromFile(path).getLines.drop(4).map(line => {
       lineIndex += 1
-      getTestFromLine(path, lineIndex, line)
+      getTestFromLine(f"$path:$lineIndex", line)
     }).toList
   }
 
-  def getTestFromLine(path: String, lineIndex: Integer, line: String): TestData = {
-    parseTestLine(path, lineIndex, line) match {
+  def getTestFromLine(path: String, line: String): TestData = {
+    parseTestLine(path, line) match {
       case Some(testData) => return testData
-      case None => throw new Exception(f"unable to parse test line: ${"\""}$line${"\""} in $path:$lineIndex")
+      case None => throw new Exception(f"unable to parse test line: ${"\""}$line${"\""} in $path")
     }
   }
 
-  def parseTestLine(path: String, lineIndex: Integer, line: String): Option[TestData] = {
+  def parseTestLine(path: String, line: String): Option[TestData] = {
+    var data = new TestData
+    data.path = path
+    data.line = line
     val parts = line.split(" ").iterator
     var next: String = parts.next
-    var data = new TestData
-    data.file = path
-    data.line = lineIndex
     // Parse operation
     if (List("b32+", "b32-", "b32*").contains(next)) {
       data.operation = next
@@ -209,8 +209,9 @@ object TestRunner {
     println(f"[info]   $skipped skipped")
     if (failed != 0) {
       println(f"[${Console.RED}error${Console.RESET}] Test suite failed")
-      println(f"[${Console.RED}error${Console.RESET}] First test to fail was ${firstFail.file}:${firstFail.line}")
+      println(f"[${Console.RED}error${Console.RESET}] First test to fail was ${firstFail.path}")
       println(f"[${Console.RED}error${Console.RESET}] ${firstFail.toString}")
+      println(f"[${Console.RED}error${Console.RESET}] ${firstFail.line}")
       runTest(dut, firstFail, silent=false)
     }
   }
