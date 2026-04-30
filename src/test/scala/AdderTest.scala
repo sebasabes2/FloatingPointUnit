@@ -123,4 +123,36 @@ class AdderTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.output.nan.expect(true.B)
     }
   }
+
+  "Adder" should "pass Add-Shift-And-Special-Significands.fptest:1994" in {
+    test(new Adder(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x0".U)
+      dut.io.input1.exponent.poke("x28".U)
+      dut.io.input1.significand.poke("x7FFFFF8".U)
+      dut.io.input1.guard.poke("x0".U)
+      dut.io.input1.round.poke("x0".U)
+      dut.io.input1.sticky.poke("x0".U)
+
+      dut.io.input2.sign.poke("x0".U)
+      dut.io.input2.exponent.poke("x28".U)
+      dut.io.input2.significand.poke("x0000011".U)
+      dut.io.input2.guard.poke("x0".U)
+      dut.io.input2.round.poke("x0".U)
+      dut.io.input2.sticky.poke("x1".U)
+
+      dut.io.subtract.poke(false.B)
+
+      dut.clock.step(1)
+
+      dut.io.output.sign.expect("x0".U)
+      dut.io.output.exponent.expect("x28".U)
+      dut.io.output.significand.expect("x1000001".U)
+      dut.io.output.guard.expect("x0".U)
+      dut.io.output.round.expect("x0".U)
+      dut.io.output.sticky.expect("x1".U)
+      dut.io.output.infinity.expect(false.B)
+      dut.io.output.nan.expect(false.B)
+
+    }
+  }
 }

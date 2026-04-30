@@ -35,7 +35,7 @@ class Normalizer(exponentWidth: Int, outputSignificandWidth: Int) extends Module
   io.output.significand := significandNormalized(outputSignificandWidth + 2,3)
   io.output.guard := significandNormalized(2)
   io.output.round := significandNormalized(1)
-  io.output.sticky := significandNormalized(0)
+  io.output.sticky := significandNormalized(0) || io.input.sticky.asBool
   io.output.infinity := overflow || io.input.infinity
 
   io.overflow := overflow

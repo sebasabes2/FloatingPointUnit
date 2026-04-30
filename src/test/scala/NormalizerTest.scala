@@ -49,4 +49,22 @@ class NormalizerTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.output.infinity.expect(true.B)
     }
   }
+
+  "Normalizer" should "pass Add-Shift-And-Special-Significands.fptest:1994" in {
+    test(new Normalizer(8, 24)) { dut =>
+      dut.io.input.sign.poke("x0".U)
+      dut.io.input.exponent.poke("x28".U)
+      dut.io.input.significand.poke("x1000001".U)
+      dut.io.input.guard.poke("x0".U)
+      dut.io.input.round.poke("x0".U)
+      dut.io.input.sticky.poke("x1".U)
+
+      dut.io.output.sign.expect("x0".U)
+      dut.io.output.exponent.expect("x29".U)
+      dut.io.output.significand.expect("x800000".U)
+      dut.io.output.guard.expect("x1".U)
+      dut.io.output.round.expect("x0".U)
+      dut.io.output.sticky.expect("x1".U)
+    }
+  }
 }
