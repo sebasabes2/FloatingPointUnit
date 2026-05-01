@@ -5,9 +5,9 @@ import chisel3.util._
 
 class FloatingPointUnit extends Module {
   val io = IO(new Bundle {
-    val a = Input(UInt(32.W))
-    val b = Input(UInt(32.W))
-    val res = Output(UInt(32.W))
+    val input1 = Input(UInt(32.W))
+    val input2 = Input(UInt(32.W))
+    val output = Output(UInt(32.W))
   })
 
   val flags = IO(new Bundle {
@@ -25,8 +25,8 @@ class FloatingPointUnit extends Module {
   // Decode floating points
   val decoder1 = Module(new Decoder(exponentWidth, mantissaWidth))
   val decoder2 = Module(new Decoder(exponentWidth, mantissaWidth))
-  decoder1.io.input := io.a
-  decoder2.io.input := io.b
+  decoder1.io.input := io.input1
+  decoder2.io.input := io.input2
 
   // ExponentMatcher
   val exponentMatcher = Module(new ExponentMatcher(exponentWidth, significandWidth))
@@ -55,7 +55,7 @@ class FloatingPointUnit extends Module {
   // Encode output
   val encoder = Module(new Encoder(exponentWidth, mantissaWidth))
   encoder.io.input := rounder.io.output
-  io.res := encoder.io.output
+  io.output := encoder.io.output
 
   // Flags
   flags.overflow := RegNext(normalizer.io.overflow) || rounder.io.overflow

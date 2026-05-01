@@ -39,10 +39,10 @@ class FpuTester extends Module {
 
   val fpu = Module(new FloatingPointUnit)
 
-  fpu.io.a := RegNext(input1)
-  fpu.io.b := RegNext(input2)
+  fpu.io.input1 := RegNext(input1)
+  fpu.io.input2 := RegNext(input2)
 
-  val output = RegNext(fpu.io.res)
+  val output = RegNext(fpu.io.output)
 
   // Output
 

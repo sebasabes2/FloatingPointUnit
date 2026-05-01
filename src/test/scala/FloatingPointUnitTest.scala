@@ -4,9 +4,9 @@ import chiseltest._
 
 object FloatingPointUnitTest {
   def apply(dut: FloatingPointUnit, input1: Float, input2: Float, expected: Float) {
-    dut.io.a.poke(("x" + java.lang.Float.floatToIntBits(input1).toHexString).U)
-    dut.io.b.poke(("x" + java.lang.Float.floatToIntBits(input2).toHexString).U)
+    dut.io.input1.poke(("x" + java.lang.Float.floatToIntBits(input1).toHexString).U)
+    dut.io.input2.poke(("x" + java.lang.Float.floatToIntBits(input2).toHexString).U)
     dut.clock.step(6)
-    dut.io.res.expect(("x" + java.lang.Float.floatToIntBits(expected).toHexString).U)
+    dut.io.output.expect(("x" + java.lang.Float.floatToIntBits(expected).toHexString).U)
   }
 }

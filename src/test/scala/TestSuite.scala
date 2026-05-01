@@ -244,8 +244,8 @@ object TestRunner {
     val input1 = ("x" + java.lang.Float.floatToIntBits(test.input1).toHexString).U
     val input2 = ("x" + java.lang.Float.floatToIntBits(test.input2).toHexString).U
     val expectedOutput = ("x" + java.lang.Float.floatToIntBits(test.output).toHexString).U
-    dut.io.a.poke(input1)
-    dut.io.b.poke(input2)
+    dut.io.input1.poke(input1)
+    dut.io.input2.poke(input2)
     dut.clock.step(3)
     // Check flags
     if (test.raisedExceptions.underflow) {
@@ -266,9 +266,9 @@ object TestRunner {
     }
     // Check result
     if (!silent) {
-      dut.io.res.expect(expectedOutput)
+      dut.io.output.expect(expectedOutput)
     }
-    val output = dut.io.res.peek
+    val output = dut.io.output.peek
     if (output.litValue.toInt == expectedOutput.litValue.toInt) {
       return TestResult.passed
     } else {
