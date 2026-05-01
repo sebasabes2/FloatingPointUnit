@@ -6,19 +6,25 @@ class ExponentMatcher(exponentWidth: Int, significandWidth: Int) extends Module 
   val io = IO(new Bundle {
     val input1 = Input(new FloatingPoint(exponentWidth, significandWidth))
     val input2 = Input(new FloatingPoint(exponentWidth, significandWidth))
+    val subtraction = Input(Bool())
     val larger = Output(new FloatingPoint(exponentWidth, significandWidth))
     val smaller = Output(new FloatingPoint(exponentWidth, significandWidth))
   })
 
-  val sameExponent = io.input1.exponent === io.input2.exponent
-  val exponent1Larger = io.input1.exponent > io.input2.exponent
-  val sameSignificand = io.input1.significand === io.input2.significand
-  val significand1Larger = io.input1.significand > io.input2.significand
-  val input1Positive = !io.input1.sign
+  val input1 = io.input1
+  val input2 = Wire(new FloatingPoint(exponentWidth, significandWidth))
+  input2 := io.input2
+  input2.sign := io.input2.sign ^ io.subtraction
+
+  val sameExponent = input1.exponent === input2.exponent
+  val exponent1Larger = input1.exponent > input2.exponent
+  val sameSignificand = input1.significand === input2.significand
+  val significand1Larger = input1.significand > input2.significand
+  val input1Positive = !input1.sign
   val input1Larger = Mux(sameExponent, Mux(sameSignificand, input1Positive, significand1Larger), exponent1Larger)
 
-  val larger = Mux(input1Larger, io.input1, io.input2)
-  val smaller = Mux(input1Larger, io.input2, io.input1)
+  val larger = Mux(input1Larger, input1, input2)
+  val smaller = Mux(input1Larger, input2, input1)
 
   val exponentDifference = larger.exponent - smaller.exponent
   io.larger := larger

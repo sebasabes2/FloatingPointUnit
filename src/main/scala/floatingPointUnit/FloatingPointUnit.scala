@@ -7,6 +7,7 @@ class FloatingPointUnit extends Module {
   val io = IO(new Bundle {
     val input1 = Input(UInt(32.W))
     val input2 = Input(UInt(32.W))
+    val operation = Input(UInt(1.W))
     val output = Output(UInt(32.W))
   })
 
@@ -32,6 +33,7 @@ class FloatingPointUnit extends Module {
   val exponentMatcher = Module(new ExponentMatcher(exponentWidth, significandWidth))
   exponentMatcher.io.input1 := decoder1.io.output
   exponentMatcher.io.input2 := decoder2.io.output
+  exponentMatcher.io.subtraction := io.operation(0)
 
   // PreAdder
   val preAdder = Module(new PreAdder(exponentWidth, significandWidth))

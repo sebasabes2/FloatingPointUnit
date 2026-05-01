@@ -238,9 +238,19 @@ object TestRunner {
   }
 
   def runTest(dut: FloatingPointUnit, test: TestData, silent: Boolean = true): TestResult.Value = {
-    if (test.operation != "b32+" || test.roundingMode != "=0") {
+    // Select operation
+    if (test.operation == "b32+") {
+      dut.io.operation.poke(0.U)
+    } else if (test.operation == "b32-") {
+      dut.io.operation.poke(1.U)
+    } else {
       return TestResult.skipped
     }
+    // Select rounding mode
+    if (test.roundingMode != "=0") {
+      return TestResult.skipped
+    }
+    // Set inputs
     val input1 = ("x" + java.lang.Float.floatToIntBits(test.input1).toHexString).U
     val input2 = ("x" + java.lang.Float.floatToIntBits(test.input2).toHexString).U
     val expectedOutput = ("x" + java.lang.Float.floatToIntBits(test.output).toHexString).U
