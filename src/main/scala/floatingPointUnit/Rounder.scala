@@ -1,20 +1,37 @@
 package floatingPointUnit
 
 import chisel3._
+import chisel3.util._
 import math._
 
 class Rounder(exponentWidth: Int, significandWidth: Int) extends Module {
   val io = IO(new Bundle {
     val input = Input(new FloatingPoint(exponentWidth, significandWidth))
+    val roundingMode = Input(UInt(3.W))
     val output = Output(new FloatingPoint(exponentWidth, significandWidth))
     val inexact = Output(Bool())
     val overflow = Output(Bool())
   })
 
-  // TODO: implement other rounding modes
-
   // Round to nearest, tie to even
-  val rnd = io.input.guard & (io.input.significand(0) | io.input.round | io.input.sticky)
+  val nearestEven = io.input.guard & (io.input.significand(0) | io.input.round | io.input.sticky)
+
+  // Round to nearest, tie away from zero
+  val nearestAway = io.input.guard
+
+  // Round towards positive infinity
+  val positiveInf = !io.input.sign & (io.input.guard | io.input.round | io.input.sticky)
+
+  // Round towards positive infinity
+  val negativeInf = io.input.sign & (io.input.guard | io.input.round | io.input.sticky)
+
+  val rnd = WireDefault(0.U(1.W))
+  switch (io.roundingMode) {
+    is (0.U) { rnd := nearestEven }
+    is (1.U) { rnd := nearestAway }
+    is (2.U) { rnd := positiveInf }
+    is (3.U) { rnd := negativeInf }
+  }
 
   // Normalize result
   val result = io.input.significand +& rnd

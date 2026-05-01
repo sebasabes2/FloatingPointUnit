@@ -247,7 +247,17 @@ object TestRunner {
       return TestResult.skipped
     }
     // Select rounding mode
-    if (test.roundingMode != "=0") {
+    if (test.roundingMode == "=0") {
+      dut.io.roundingMode.poke(0.U)
+    } else if (test.roundingMode == "=^") {
+      dut.io.roundingMode.poke(1.U)
+    } else if (test.roundingMode == ">") {
+      dut.io.roundingMode.poke(2.U)
+    } else if (test.roundingMode == "<") {
+      dut.io.roundingMode.poke(3.U)
+    } else if (test.roundingMode == "0") {
+      dut.io.roundingMode.poke(4.U)
+    } else {
       return TestResult.skipped
     }
     // Set inputs

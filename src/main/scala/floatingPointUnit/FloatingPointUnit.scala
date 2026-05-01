@@ -8,6 +8,7 @@ class FloatingPointUnit extends Module {
     val input1 = Input(UInt(32.W))
     val input2 = Input(UInt(32.W))
     val operation = Input(UInt(1.W))
+    val roundingMode = Input(UInt(3.W))
     val output = Output(UInt(32.W))
   })
 
@@ -53,6 +54,7 @@ class FloatingPointUnit extends Module {
   // Rounder
   val rounder = Module(new Rounder(exponentWidth, significandWidth))
   rounder.io.input := RegNext(normalizer.io.output)
+  rounder.io.roundingMode := io.roundingMode
 
   // Encode output
   val encoder = Module(new Encoder(exponentWidth, mantissaWidth))
