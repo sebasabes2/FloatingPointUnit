@@ -5,23 +5,27 @@ import org.scalatest.flatspec.AnyFlatSpec
 import java.io.File
 import scala.io.Source
 
+class Exceptions {
+  var inexact = false
+  var underflow = false
+  var overflow = false
+  var zero = false
+  var nan = false
+
+  override def toString = {
+    (if (inexact) "x" else "") +
+    (if (underflow) "u" else "") +
+    (if (overflow) "o" else "") +
+    (if (zero) "z" else "") +
+    (if (nan) "i" else "")
+  }
+}
+
 class TestData {
   var operation: String = ""
   var roundingMode: String = ""
 
-  var inexact = false
-  var underflow = false
-  var overflow = false
-  var divisionByZero = false
-  var invalid = false
-
-  def exceptions = {
-    (if (inexact) "x" else "") +
-    (if (underflow) "u" else "") +
-    (if (overflow) "o" else "") +
-    (if (divisionByZero) "z" else "") +
-    (if (invalid) "i" else "")
-  }
+  var trappedExceptions = new Exceptions
 
   var input1 = Float.NaN
   var input2 = Float.NaN
@@ -30,11 +34,13 @@ class TestData {
   var hasInput3 = false
   var output = Float.NaN
 
+  var raisedExceptions = new Exceptions
+
   var line: String = ""
   var path: String = ""
 
   override def toString = {
-    f"operation: $operation, rounding mode: $roundingMode, exceptions: $exceptions, input1: $input1${if (hasInput2) f", input2: $input2" else ""}${if (hasInput3) f", input3: $input3" else ""}, output: $output"
+    f"operation: $operation, rounding mode: $roundingMode, trapped exceptions: $trappedExceptions, input1: $input1${if (hasInput2) f", input2: $input2" else ""}${if (hasInput3) f", input3: $input3" else ""}, output: $output, raised exceptions: $raisedExceptions"
   }
 }
 
@@ -89,8 +95,12 @@ object TestParser {
       return None
     }
     // Parse trapped exceptions
-    if (parseExceptions(next, data)) {
-      next = parts.next
+    parseExceptions(next) match {
+      case Some(exceptions) => {
+        data.trappedExceptions = exceptions
+        next = parts.next;
+      }
+      case None =>
     }
     // Parse input 1. This input is mandatory
     parseFloat(next) match {
@@ -129,10 +139,22 @@ object TestParser {
       case Some(float) => data.output = float
       case None => return None
     }
+    // Return if done parsing
+    if (!parts.hasNext) {
+      return Some(data)
+    }
+    next = parts.next
+    // Parse raised exceptions
+    parseExceptions(next) match {
+      case Some(exceptions) => {
+        data.raisedExceptions = exceptions
+      }
+      case None => return None
+    }
     return Some(data)
   }
 
-  def parseExceptions(input: String, data: TestData): Boolean = {
+  def parseExceptions(input: String): Option[Exceptions] = {
     var x, u, v, w, o, z, i = false
     if (input.contains("x")) { x = true }
     if (input.contains("u")) { u = true }
@@ -142,14 +164,15 @@ object TestParser {
     if (input.contains("z")) { z = true }
     if (input.contains("i")) { i = true }
     if (List(x, u, v, w, o, z, i).count(b => b) == input.length) {
-      data.inexact = x
-      data.underflow = u || v || w
-      data.overflow = o
-      data.divisionByZero = z
-      data.invalid = i
-      return true
+      var exceptions = new Exceptions
+      exceptions.inexact = x
+      exceptions.underflow = u || v || w
+      exceptions.overflow = o
+      exceptions.zero = z
+      exceptions.nan = i
+      return Some(exceptions)
     } else {
-      return false
+      return None
     }
   }
 
@@ -182,10 +205,8 @@ object TestParser {
   }
 }
 
-class TestResult {
-  var passed = false
-  var failed = false
-  var skipped = false
+object TestResult extends Enumeration {
+  val passed, failed, skipped = Value
 }
 
 object TestRunner {
@@ -198,10 +219,10 @@ object TestRunner {
     while (iterator.hasNext) {
       val test = iterator.next
       val result = runTest(dut, test)
-      if (result.failed && failed == 0) { firstFail = test }
-      if (result.passed) { passed += 1 }
-      if (result.failed) { failed += 1 }
-      if (result.skipped) { skipped += 1 }
+      if (result == TestResult.failed && failed == 0) { firstFail = test }
+      if (result == TestResult.passed) { passed += 1 }
+      if (result == TestResult.failed) { failed += 1 }
+      if (result == TestResult.skipped) { skipped += 1 }
     }
     println(f"[info] Test suite result:")
     println(f"[info]   $passed passed")
@@ -216,28 +237,43 @@ object TestRunner {
     }
   }
 
-  def runTest(dut: FloatingPointUnit, test: TestData, silent: Boolean = true): TestResult = {
-    val result = new TestResult
+  def runTest(dut: FloatingPointUnit, test: TestData, silent: Boolean = true): TestResult.Value = {
     if (test.operation != "b32+" || test.roundingMode != "=0") {
-      result.skipped = true
-      return result
+      return TestResult.skipped
     }
     val input1 = ("x" + java.lang.Float.floatToIntBits(test.input1).toHexString).U
     val input2 = ("x" + java.lang.Float.floatToIntBits(test.input2).toHexString).U
     val expectedOutput = ("x" + java.lang.Float.floatToIntBits(test.output).toHexString).U
     dut.io.a.poke(input1)
     dut.io.b.poke(input2)
-    dut.clock.step(2)
+    dut.clock.step(3)
+    // Check flags
+    if (test.raisedExceptions.underflow) {
+      if (!silent) { dut.flags.underflow.expect(true.B) }
+      if (dut.flags.underflow.peek.litToBoolean) {
+        return TestResult.passed
+      } else {
+        return TestResult.failed
+      }
+    }
+    if (test.raisedExceptions.overflow) {
+      if (!silent) { dut.flags.overflow.expect(true.B) }
+      if (dut.flags.overflow.peek.litToBoolean) {
+        return TestResult.passed
+      } else {
+        return TestResult.failed
+      }
+    }
+    // Check result
     if (!silent) {
       dut.io.res.expect(expectedOutput)
     }
     val output = dut.io.res.peek
     if (output.litValue.toInt == expectedOutput.litValue.toInt) {
-      result.passed = true
+      return TestResult.passed
     } else {
-      result.failed = true
+      return TestResult.failed
     }
-    return result
   }
 }
 
