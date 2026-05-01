@@ -17,8 +17,8 @@ class Normalizer(exponentWidth: Int, outputSignificandWidth: Int) extends Module
   val normalizeRight = io.input.significand(outputSignificandWidth).asBool
   val overflow = normalizeRight && io.input.exponent >= (pow(2, exponentWidth).intValue - 2).U
 
-  val leadingOneDetector = Module(new LeadingOneDetector(outputSignificandWidth))
-  leadingOneDetector.io.input := io.input.significand(outputSignificandWidth - 1,0)
+  val leadingOneDetector = Module(new LeadingOneDetector(outputSignificandWidth + 3))
+  leadingOneDetector.io.input := io.input.significandWithRoundBits()(outputSignificandWidth + 2, 0)
   val underflow = leadingOneDetector.io.position >= io.input.exponent
   val normalizeLeftAmount = Mux(underflow, io.input.exponent - 1.U, leadingOneDetector.io.position)
 

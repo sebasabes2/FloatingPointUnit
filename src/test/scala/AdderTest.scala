@@ -155,4 +155,30 @@ class AdderTest extends AnyFlatSpec with ChiselScalatestTester {
 
     }
   }
+
+  "Adder" should "pass ieee754-test-suite/Add-Cancellation.fptest:20" in {
+    test(new Adder(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x1".U)
+      dut.io.input1.exponent.poke("x29".U)
+      dut.io.input1.significand.poke("x4000000".U)
+
+      dut.io.input2.sign.poke("x0".U)
+      dut.io.input2.exponent.poke("x29".U)
+      dut.io.input2.significand.poke("x4000003".U)
+
+      dut.io.subtract.poke(true.B)
+
+      dut.clock.step(1)
+
+      dut.io.output.sign.expect("x1".U)
+      dut.io.output.exponent.expect("x29".U)
+      dut.io.output.significand.expect("x000000".U)
+      dut.io.output.guard.expect("x1".U)
+      dut.io.output.round.expect("x0".U)
+      dut.io.output.sticky.expect("x0".U)
+      dut.io.output.infinity.expect(false.B)
+      dut.io.output.nan.expect(false.B)
+
+    }
+  }
 }

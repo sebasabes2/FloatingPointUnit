@@ -31,4 +31,32 @@ class DecoderTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.output.nan.expect(false.B)
     }
   }
+  
+  "Decoder" should "pass ieee754-test-suite/Add-Cancellation.fptest:20" in {
+    test(new Decoder(8, 23)) { dut =>
+      // Input 1
+      dut.io.input.poke("x147FFFFF".U)
+
+      dut.io.output.sign.expect("x0".U)
+      dut.io.output.exponent.expect("x28".U)
+      dut.io.output.significand.expect("xFFFFFF".U)
+      dut.io.output.guard.expect("x0".U)
+      dut.io.output.round.expect("x0".U)
+      dut.io.output.sticky.expect("x0".U)
+      dut.io.output.infinity.expect(false.B)
+      dut.io.output.nan.expect(false.B)
+
+      // Input2
+      dut.io.input.poke("x94800000".U)
+
+      dut.io.output.sign.expect("x1".U)
+      dut.io.output.exponent.expect("x29".U)
+      dut.io.output.significand.expect("x800000".U)
+      dut.io.output.guard.expect("x0".U)
+      dut.io.output.round.expect("x0".U)
+      dut.io.output.sticky.expect("x0".U)
+      dut.io.output.infinity.expect(false.B)
+      dut.io.output.nan.expect(false.B)
+    }
+  }
 }
