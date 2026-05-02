@@ -243,6 +243,8 @@ object TestRunner {
       dut.io.operation.poke(0.U)
     } else if (test.operation == "b32-") {
       dut.io.operation.poke(1.U)
+    } else if (test.operation == "b32*") {
+      dut.io.operation.poke(2.U)
     } else {
       return TestResult.skipped
     }

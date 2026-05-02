@@ -7,7 +7,7 @@ class FloatingPointUnit extends Module {
   val io = IO(new Bundle {
     val input1 = Input(UInt(32.W))
     val input2 = Input(UInt(32.W))
-    val operation = Input(UInt(1.W))
+    val operation = Input(UInt(2.W))
     val roundingMode = Input(UInt(3.W))
     val output = Output(UInt(32.W))
   })
@@ -30,6 +30,8 @@ class FloatingPointUnit extends Module {
   decoder1.io.input := io.input1
   decoder2.io.input := io.input2
 
+  // Adder modules
+
   // ExponentMatcher
   val exponentMatcher = Module(new ExponentMatcher(exponentWidth, significandWidth))
   exponentMatcher.io.input1 := decoder1.io.output
@@ -47,22 +49,47 @@ class FloatingPointUnit extends Module {
   adder.io.input2 := preAdder.io.input2
   adder.io.subtract := preAdder.io.subtract
 
+  val addRightNormalizer = Module(new RightNormalizer(exponentWidth, significandWidth))
+  addRightNormalizer.io.input := adder.io.output
+
   // Normalizer
   val normalizer = Module(new Normalizer(exponentWidth, significandWidth))
-  normalizer.io.input := adder.io.output
+  normalizer.io.input := addRightNormalizer.io.output
+
+  // Multiplier modules
+
+  val multiplier = Module(new Multiplier(exponentWidth, significandWidth))
+  multiplier.io.input1 := decoder1.io.output
+  multiplier.io.input2 := decoder2.io.output
+
+  val multRightNormalizer = Module(new RightNormalizer(exponentWidth, significandWidth * 2 - 1))
+  multRightNormalizer.io.input := multiplier.io.output
+
+  val multShortener = Module(new Shortener(exponentWidth, significandWidth * 2 - 1, significandWidth))
+  multShortener.io.input := multRightNormalizer.io.output
+
+  // Combiner
+  val combiner = Module(new Combiner(exponentWidth, significandWidth))
+  combiner.io.addition := normalizer.io.output
+  combiner.io.multiplication := multShortener.io.output
+  combiner.io.operation := io.operation
 
   // Rounder
   val rounder = Module(new Rounder(exponentWidth, significandWidth))
-  rounder.io.input := RegNext(normalizer.io.output)
+  rounder.io.input := RegNext(combiner.io.combined)
   rounder.io.roundingMode := io.roundingMode
+
+  // Renormalizer
+  val renormalizer = Module(new RightNormalizer(exponentWidth, significandWidth))
+  renormalizer.io.input := rounder.io.output
 
   // Encode output
   val encoder = Module(new Encoder(exponentWidth, mantissaWidth))
-  encoder.io.input := rounder.io.output
+  encoder.io.input := renormalizer.io.output
   io.output := encoder.io.output
 
   // Flags
-  flags.overflow := RegNext(normalizer.io.overflow) || rounder.io.overflow
+  flags.overflow := RegNext(addRightNormalizer.io.overflow) || renormalizer.io.overflow
   flags.underflow := RegNext(normalizer.io.underflow)
   flags.zero := RegNext(normalizer.io.zero)
   flags.inexact := rounder.io.inexact
