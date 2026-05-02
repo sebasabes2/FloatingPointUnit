@@ -39,6 +39,8 @@ class FpuTester extends Module {
 
   val fpu = Module(new FloatingPointUnit)
 
+  fpu.io.operation := 0.U
+  fpu.io.roundingMode := 0.U
   fpu.io.input1 := RegNext(input1)
   fpu.io.input2 := RegNext(input2)
 
