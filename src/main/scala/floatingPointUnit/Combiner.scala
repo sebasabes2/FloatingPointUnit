@@ -3,26 +3,35 @@ package floatingPointUnit
 import chisel3._
 import chisel3.util._
 
-class Combiner(exponentWidth: Int, significandWidth: Int) extends Module {
+class Combiner(exponentWidth: Int, additionSignificandWidth: Int, multiplicationSignificandWidth: Int) extends Module {
   val io = IO(new Bundle {
-    val addition = Input(new FloatingPoint(exponentWidth, significandWidth))
-    val multiplication = Input(new FloatingPoint(exponentWidth, significandWidth))
+    val addition = Input(new FloatingPoint(exponentWidth, additionSignificandWidth))
+    val multiplication = Input(new FloatingPoint(exponentWidth, multiplicationSignificandWidth))
     val operation = Input(UInt(2.W))
-    val combined = Output(new FloatingPoint(exponentWidth, significandWidth))
+    val output = Output(new FloatingPoint(exponentWidth, multiplicationSignificandWidth))
   })
 
-  io.combined.sign := 0.U
-  io.combined.exponent := 0.U
-  io.combined.significand := 0.U
-  io.combined.guard := 0.U
-  io.combined.round := 0.U
-  io.combined.sticky := 0.U
-  io.combined.nan := false.B
-  io.combined.infinity := false.B
+  val addition = Wire(new FloatingPoint(exponentWidth, multiplicationSignificandWidth))
+  addition := io.addition
+  addition.significand := io.addition.significand ## io.addition.guard ## io.addition.round ## io.addition.sticky ## 0.U((multiplicationSignificandWidth - additionSignificandWidth - 3).W)
+  addition.guard := 0.U
+  addition.round := 0.U
+  addition.sticky := 0.U
+
+  val multiplication = io.multiplication
+
+  io.output.sign := 0.U
+  io.output.exponent := 0.U
+  io.output.significand := 0.U
+  io.output.guard := 0.U
+  io.output.round := 0.U
+  io.output.sticky := 0.U
+  io.output.nan := false.B
+  io.output.infinity := false.B
 
   switch (io.operation) {
-    is (0.U) { io.combined := io.addition }
-    is (1.U) { io.combined := io.addition }
-    is (2.U) { io.combined := io.multiplication }
+    is (0.U) { io.output := addition }
+    is (1.U) { io.output := addition }
+    is (2.U) { io.output := multiplication }
   }
 }

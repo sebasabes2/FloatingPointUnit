@@ -3,7 +3,7 @@ package floatingPointUnit
 import chisel3._
 import math._
 
-class Normalizer(exponentWidth: Int, significandWidth: Int) extends Module {
+class LeftNormalizer(exponentWidth: Int, significandWidth: Int) extends Module {
   val io = IO(new Bundle {
     val input = Input(new FloatingPoint(exponentWidth, significandWidth))
     val output = Output(new FloatingPoint(exponentWidth, significandWidth))

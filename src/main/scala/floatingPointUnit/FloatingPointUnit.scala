@@ -30,8 +30,6 @@ class FloatingPointUnit extends Module {
   decoder1.io.input := io.input1
   decoder2.io.input := io.input2
 
-  // Adder modules
-
   // ExponentMatcher
   val exponentMatcher = Module(new ExponentMatcher(exponentWidth, significandWidth))
   exponentMatcher.io.input1 := decoder1.io.output
@@ -49,37 +47,32 @@ class FloatingPointUnit extends Module {
   adder.io.input2 := preAdder.io.input2
   adder.io.subtract := preAdder.io.subtract
 
-  val addRightNormalizer = Module(new RightNormalizer(exponentWidth, significandWidth))
-  addRightNormalizer.io.input := adder.io.output
-
-  // Normalizer
-  val normalizer = Module(new Normalizer(exponentWidth, significandWidth))
-  normalizer.io.input := addRightNormalizer.io.output
-
-  // Multiplier modules
-
+  // Multiplier
   val multiplier = Module(new Multiplier(exponentWidth, significandWidth))
   multiplier.io.input1 := decoder1.io.output
   multiplier.io.input2 := decoder2.io.output
 
-  val multRightNormalizer = Module(new RightNormalizer(exponentWidth, significandWidth * 2 - 1))
-  multRightNormalizer.io.input := multiplier.io.output
-
-  val multNormalizer = Module(new Normalizer(exponentWidth, significandWidth * 2 - 1))
-  multNormalizer.io.input := multRightNormalizer.io.output
-
-  val multShortener = Module(new Shortener(exponentWidth, significandWidth * 2 - 1, significandWidth))
-  multShortener.io.input := multNormalizer.io.output
-
   // Combiner
-  val combiner = Module(new Combiner(exponentWidth, significandWidth))
-  combiner.io.addition := normalizer.io.output
-  combiner.io.multiplication := multShortener.io.output
+  val combiner = Module(new Combiner(exponentWidth, significandWidth + 1, significandWidth * 2))
+  combiner.io.addition := adder.io.output
+  combiner.io.multiplication := multiplier.io.output
   combiner.io.operation := io.operation
+
+  // Right normalizer
+  val rightNormalizer = Module(new RightNormalizer(exponentWidth, significandWidth * 2 - 1))
+  rightNormalizer.io.input := combiner.io.output
+
+  // Left normalizer
+  val leftNormalizer = Module(new LeftNormalizer(exponentWidth, significandWidth * 2 - 1))
+  leftNormalizer.io.input := rightNormalizer.io.output
+
+  // Shortener
+  val shortener = Module(new Shortener(exponentWidth, significandWidth * 2 - 1, significandWidth))
+  shortener.io.input := leftNormalizer.io.output
 
   // Rounder
   val rounder = Module(new Rounder(exponentWidth, significandWidth))
-  rounder.io.input := combiner.io.combined
+  rounder.io.input := shortener.io.output
   rounder.io.roundingMode := io.roundingMode
 
   // Renormalizer
@@ -92,9 +85,14 @@ class FloatingPointUnit extends Module {
   io.output := encoder.io.output
 
   // Flags
-  flags.overflow := addRightNormalizer.io.overflow || multiplier.io.overflow || multRightNormalizer.io.overflow || renormalizer.io.overflow
-  flags.underflow := normalizer.io.underflow || multiplier.io.underflow || multNormalizer.io.underflow
-  flags.zero := normalizer.io.zero
+  flags.overflow := rightNormalizer.io.overflow || multiplier.io.overflow || renormalizer.io.overflow
+  flags.underflow := leftNormalizer.io.underflow || multiplier.io.underflow
+  flags.zero := leftNormalizer.io.zero
   flags.inexact := rounder.io.inexact
   flags.nan := adder.io.nan
 }
+
+object FloatingPointUnit extends App {
+  (new chisel3.stage.ChiselStage).emitVerilog(new FloatingPointUnit)
+}
+
