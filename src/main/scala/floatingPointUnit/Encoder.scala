@@ -19,7 +19,6 @@ class Encoder(exponentWidth: Int, mantissaWidth: Int) extends Module {
     })
   })
 
-  val denormal = !io.input.significand(significandWidth - 1)
   val default = io.input.sign ## Mux(io.input.denormal, 0.U, io.input.exponent) ## io.input.significand(significandWidth - 2,0)
   val nan = 0.U(1.W) ## (pow(2, exponentWidth).intValue - 1).U(exponentWidth.W) ## 1.U(1.W) ## 0.U((mantissaWidth - 1).W)
   val infinity = io.input.sign ## (pow(2, exponentWidth).intValue - 1).U(exponentWidth.W) ## 0.U(mantissaWidth.W)
