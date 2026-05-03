@@ -65,8 +65,11 @@ class FloatingPointUnit extends Module {
   val multRightNormalizer = Module(new RightNormalizer(exponentWidth, significandWidth * 2 - 1))
   multRightNormalizer.io.input := multiplier.io.output
 
+  val multNormalizer = Module(new Normalizer(exponentWidth, significandWidth * 2 - 1))
+  multNormalizer.io.input := multRightNormalizer.io.output
+
   val multShortener = Module(new Shortener(exponentWidth, significandWidth * 2 - 1, significandWidth))
-  multShortener.io.input := multRightNormalizer.io.output
+  multShortener.io.input := multNormalizer.io.output
 
   // Combiner
   val combiner = Module(new Combiner(exponentWidth, significandWidth))
@@ -76,7 +79,7 @@ class FloatingPointUnit extends Module {
 
   // Rounder
   val rounder = Module(new Rounder(exponentWidth, significandWidth))
-  rounder.io.input := RegNext(combiner.io.combined)
+  rounder.io.input := combiner.io.combined
   rounder.io.roundingMode := io.roundingMode
 
   // Renormalizer
@@ -89,9 +92,9 @@ class FloatingPointUnit extends Module {
   io.output := encoder.io.output
 
   // Flags
-  flags.overflow := RegNext(addRightNormalizer.io.overflow) || renormalizer.io.overflow
-  flags.underflow := RegNext(normalizer.io.underflow)
-  flags.zero := RegNext(normalizer.io.zero)
+  flags.overflow := addRightNormalizer.io.overflow || multiplier.io.overflow || multRightNormalizer.io.overflow || renormalizer.io.overflow
+  flags.underflow := normalizer.io.underflow || multiplier.io.underflow || multNormalizer.io.underflow
+  flags.zero := normalizer.io.zero
   flags.inexact := rounder.io.inexact
-  flags.nan := RegNext(adder.io.nan)
+  flags.nan := adder.io.nan
 }

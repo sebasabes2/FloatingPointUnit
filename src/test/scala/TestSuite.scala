@@ -268,7 +268,6 @@ object TestRunner {
     val expectedOutput = ("x" + java.lang.Float.floatToIntBits(test.output).toHexString).U
     dut.io.input1.poke(input1)
     dut.io.input2.poke(input2)
-    dut.clock.step(3)
     // Check flags
     if (test.raisedExceptions.underflow) {
       if (!silent) { dut.flags.underflow.expect(true.B) }
