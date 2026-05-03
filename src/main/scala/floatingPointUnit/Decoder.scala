@@ -13,20 +13,23 @@ class Decoder(exponentWidth: Int, mantissaWidth: Int) extends Module {
   })
 
   val sign = io.input(floatingPointWidth - 1)
-  val exponent = io.input(mantissaWidth + exponentWidth - 1, mantissaWidth) // TODO: add bias
+  val exponent = io.input(mantissaWidth + exponentWidth - 1, mantissaWidth)
   val mantissa = io.input(mantissaWidth - 1,0)
 
-  val subnormal = exponent === 0.U
+  val denormal = exponent === 0.U
   val supernormal = exponent === (pow(2, exponentWidth).intValue - 1).U
   val infinity = supernormal && mantissa === 0.U
   val nan = supernormal && mantissa =/= 0.U
 
   io.output.sign := sign
-  io.output.exponent := Mux(subnormal, 1.U, exponent)
-  io.output.significand := !subnormal ## mantissa
+  io.output.exponent := Mux(denormal, 1.U, exponent)
+  io.output.significand := !denormal ## mantissa
   io.output.guard := 0.U
   io.output.round := 0.U
   io.output.sticky := 0.U
   io.output.infinity := infinity
+  io.output.denormal := denormal
+  io.output.zero := false.B
+  io.output.inexact := false.B
   io.output.nan := nan
 }

@@ -12,5 +12,5 @@ class Shortener(exponentWidth: Int, inputSignificandWidth: Int, outputSignifican
   io.output.significand := io.input.significand(inputSignificandWidth - 1, inputSignificandWidth - outputSignificandWidth)
   io.output.guard := io.input.significand(inputSignificandWidth - outputSignificandWidth - 1)
   io.output.round := io.input.significand(inputSignificandWidth - outputSignificandWidth - 2)
-  io.output.sticky := io.input.significand(inputSignificandWidth - outputSignificandWidth - 3, 0).orR | io.input.guard | io.input.round
+  io.output.sticky := io.input.significand(inputSignificandWidth - outputSignificandWidth - 3, 0).orR | io.input.guard | io.input.round | io.input.sticky
 }

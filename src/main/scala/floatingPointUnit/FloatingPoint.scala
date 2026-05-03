@@ -12,6 +12,9 @@ class FloatingPoint(exponentWidth: Int, significandWidth: Int) extends Bundle {
   val sticky = UInt(1.W)
 
   val infinity = Bool()
+  val denormal = Bool()
+  val zero = Bool()
+  val inexact = Bool()
   val nan = Bool()
 
   def significandWithRoundBits(): UInt = significand ## guard ## round ## sticky

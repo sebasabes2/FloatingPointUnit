@@ -8,7 +8,6 @@ class RightNormalizer(exponentWidth: Int, significandWidth: Int) extends Module 
   val io = IO(new Bundle {
     val input = Input(new FloatingPoint(exponentWidth, significandWidth + 1))
     val output = Output(new FloatingPoint(exponentWidth, significandWidth))
-    val overflow = Output(Bool())
   })
 
   val normalize = io.input.significand(significandWidth).asBool
@@ -19,6 +18,5 @@ class RightNormalizer(exponentWidth: Int, significandWidth: Int) extends Module 
   io.output.guard := Mux(normalize, io.input.significand(0), io.input.guard)
   io.output.round := Mux(normalize, io.input.guard, io.input.round)
   io.output.sticky := Mux(normalize, io.input.round | io.input.sticky, io.input.sticky)
-  io.output.infinity := overflow || io.input.infinity
-  io.overflow := overflow
+  io.output.infinity := io.input.infinity || overflow
 }

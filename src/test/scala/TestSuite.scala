@@ -270,16 +270,16 @@ object TestRunner {
     dut.io.input2.poke(input2)
     // Check flags
     if (test.raisedExceptions.underflow) {
-      if (!silent) { dut.flags.underflow.expect(true.B) }
-      if (dut.flags.underflow.peek.litToBoolean) {
+      if (!silent) { dut.io.flags.underflow.expect(true.B) }
+      if (dut.io.flags.underflow.peek.litToBoolean) {
         return TestResult.passed
       } else {
         return TestResult.failed
       }
     }
     if (test.raisedExceptions.overflow) {
-      if (!silent) { dut.flags.overflow.expect(true.B) }
-      if (dut.flags.overflow.peek.litToBoolean) {
+      if (!silent) { dut.io.flags.overflow.expect(true.B) }
+      if (dut.io.flags.overflow.peek.litToBoolean) {
         return TestResult.passed
       } else {
         return TestResult.failed

@@ -9,7 +9,6 @@ class Rounder(exponentWidth: Int, significandWidth: Int) extends Module {
     val input = Input(new FloatingPoint(exponentWidth, significandWidth))
     val roundingMode = Input(UInt(3.W))
     val output = Output(new FloatingPoint(exponentWidth, significandWidth + 1))
-    val inexact = Output(Bool())
   })
 
   // Round to nearest, tie to even
@@ -34,5 +33,8 @@ class Rounder(exponentWidth: Int, significandWidth: Int) extends Module {
 
   io.output := io.input
   io.output.significand := io.input.significand +& rnd
-  io.inexact := io.input.guard | io.input.round | io.input.sticky
+  io.output.guard := 0.U
+  io.output.round := 0.U
+  io.output.sticky := 0.U
+  io.output.inexact := io.input.inexact || (io.input.guard | io.input.round | io.input.sticky).asBool
 }

@@ -10,14 +10,13 @@ class FloatingPointUnit extends Module {
     val operation = Input(UInt(2.W))
     val roundingMode = Input(UInt(3.W))
     val output = Output(UInt(32.W))
-  })
-
-  val flags = IO(new Bundle {
-    val overflow = Output(Bool())
-    val underflow = Output(Bool())
-    val zero = Output(Bool())
-    val inexact = Output(Bool())
-    val nan = Output(Bool())
+    val flags = Output(new Bundle {
+      val overflow = Bool()
+      val underflow = Bool()
+      val zero = Bool()
+      val inexact = Bool()
+      val nan = Bool()
+    })
   })
 
   val exponentWidth = 8
@@ -83,13 +82,7 @@ class FloatingPointUnit extends Module {
   val encoder = Module(new Encoder(exponentWidth, mantissaWidth))
   encoder.io.input := renormalizer.io.output
   io.output := encoder.io.output
-
-  // Flags
-  flags.overflow := rightNormalizer.io.overflow || multiplier.io.overflow || renormalizer.io.overflow
-  flags.underflow := leftNormalizer.io.underflow || multiplier.io.underflow
-  flags.zero := leftNormalizer.io.zero
-  flags.inexact := rounder.io.inexact
-  flags.nan := adder.io.nan
+  io.flags := encoder.io.flags
 }
 
 object FloatingPointUnit extends App {

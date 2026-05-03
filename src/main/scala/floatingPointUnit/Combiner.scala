@@ -26,8 +26,11 @@ class Combiner(exponentWidth: Int, additionSignificandWidth: Int, multiplication
   io.output.guard := 0.U
   io.output.round := 0.U
   io.output.sticky := 0.U
-  io.output.nan := false.B
   io.output.infinity := false.B
+  io.output.denormal := false.B
+  io.output.zero := false.B
+  io.output.inexact := false.B
+  io.output.nan := false.B
 
   switch (io.operation) {
     is (0.U) { io.output := addition }
