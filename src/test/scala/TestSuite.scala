@@ -58,7 +58,7 @@ object TestParser {
 
   def getTestsFromFile(path: String): List[TestData] = {
     var lineIndex = 4
-    Source.fromFile(path).getLines.drop(4).map(line => {
+    Source.fromFile(path).getLines().drop(4).map(line => {
       lineIndex += 1
       getTestFromLine(f"$path:$lineIndex", line)
     }).toList
@@ -76,11 +76,11 @@ object TestParser {
     data.path = path
     data.line = line
     val parts = line.split(" ").iterator
-    var next: String = parts.next
+    var next: String = parts.next()
     // Parse operation
     if (List("b32+", "b32-", "b32*").contains(next)) {
       data.operation = next
-      next = parts.next;
+      next = parts.next();
     } else if (next.slice(0,3) == "b32" || next.slice(0,3) == "d64" || next.slice(0,4) == "d128") {
       data.operation = next
       return Some(data) // Return because these operations will all be skipped so no need to parse them
@@ -90,7 +90,7 @@ object TestParser {
     // Parse rounding mode
     if (List(">", "<", "0", "=0", "=^").contains(next)) {
       data.roundingMode = next
-      next = parts.next;
+      next = parts.next();
     } else {
       return None
     }
@@ -98,7 +98,7 @@ object TestParser {
     parseExceptions(next) match {
       case Some(exceptions) => {
         data.trappedExceptions = exceptions
-        next = parts.next;
+        next = parts.next();
       }
       case None =>
     }
@@ -106,7 +106,7 @@ object TestParser {
     parseFloat(next) match {
       case Some(float) => {
         data.input1 = float
-        next = parts.next;
+        next = parts.next();
       }
       case None => return None
     }
@@ -115,7 +115,7 @@ object TestParser {
       case Some(float) => {
         data.input2 = float
         data.hasInput2 = true
-        next = parts.next;
+        next = parts.next();
       }
       case None => 
     }
@@ -124,13 +124,13 @@ object TestParser {
       case Some(float) => {
         data.input3 = float
         data.hasInput3 = true
-        next = parts.next;
+        next = parts.next();
       }
       case None => 
     }
     // Parse '->'
     if (next == "->") {
-      next = parts.next
+      next = parts.next()
     } else {
       return None
     }
@@ -143,7 +143,7 @@ object TestParser {
     if (!parts.hasNext) {
       return Some(data)
     }
-    next = parts.next
+    next = parts.next()
     // Parse raised exceptions
     parseExceptions(next) match {
       case Some(exceptions) => {
@@ -210,14 +210,14 @@ object TestResult extends Enumeration {
 }
 
 object TestRunner {
-  def runTests(dut: FloatingPointUnit, tests: List[TestData]) {
+  def runTests(dut: FloatingPointUnit, tests: List[TestData]): Unit = {
     val iterator = tests.iterator
     var passed = 0
     var failed = 0
     var skipped = 0
     var firstFail = tests(0)
     while (iterator.hasNext) {
-      val test = iterator.next
+      val test = iterator.next()
       val result = runTest(dut, test)
       if (result == TestResult.failed && failed == 0) { firstFail = test }
       if (result == TestResult.passed) { passed += 1 }
@@ -271,7 +271,7 @@ object TestRunner {
     // Check flags
     if (test.raisedExceptions.underflow) {
       if (!silent) { dut.io.flags.underflow.expect(true.B) }
-      if (dut.io.flags.underflow.peek.litToBoolean) {
+      if (dut.io.flags.underflow.peek().litToBoolean) {
         return TestResult.passed
       } else {
         return TestResult.failed
@@ -279,7 +279,7 @@ object TestRunner {
     }
     if (test.raisedExceptions.overflow) {
       if (!silent) { dut.io.flags.overflow.expect(true.B) }
-      if (dut.io.flags.overflow.peek.litToBoolean) {
+      if (dut.io.flags.overflow.peek().litToBoolean) {
         return TestResult.passed
       } else {
         return TestResult.failed
@@ -289,7 +289,7 @@ object TestRunner {
     if (!silent) {
       dut.io.output.expect(expectedOutput)
     }
-    val output = dut.io.output.peek
+    val output = dut.io.output.peek()
     if (output.litValue.toInt == expectedOutput.litValue.toInt) {
       return TestResult.passed
     } else {

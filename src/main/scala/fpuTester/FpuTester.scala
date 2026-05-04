@@ -1,5 +1,6 @@
 package fpuTester
 
+import circt.stage.ChiselStage
 import chisel3._
 import chisel3.util._
 import floatingPointUnit.FloatingPointUnit
@@ -63,5 +64,5 @@ class FpuTester extends Module {
 }
 
 object FpuTester extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new FpuTester)
+  emitVerilog(new FpuTester)
 }

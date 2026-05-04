@@ -1,5 +1,6 @@
 package floatingPointUnit
 
+import circt.stage.ChiselStage
 import chisel3._
 import chisel3.util._
 
@@ -86,6 +87,6 @@ class FloatingPointUnit extends Module {
 }
 
 object FloatingPointUnit extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new FloatingPointUnit)
+  emitVerilog(new FloatingPointUnit)
 }
 
