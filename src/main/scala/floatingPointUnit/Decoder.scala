@@ -3,9 +3,9 @@ package floatingPointUnit
 import chisel3._
 import math._
 
-class Decoder(exponentWidth: Int, mantissaWidth: Int) extends Module {
-  val floatingPointWidth = 1 + exponentWidth + mantissaWidth
-  val significandWidth = mantissaWidth + 1
+class Decoder(exponentWidth: Int, fractionWidth: Int) extends Module {
+  val floatingPointWidth = 1 + exponentWidth + fractionWidth
+  val significandWidth = fractionWidth + 1
 
   val io = IO(new Bundle {
     val input = Input(UInt(floatingPointWidth.W))
@@ -13,8 +13,8 @@ class Decoder(exponentWidth: Int, mantissaWidth: Int) extends Module {
   })
 
   val sign = io.input(floatingPointWidth - 1)
-  val exponent = io.input(mantissaWidth + exponentWidth - 1, mantissaWidth)
-  val mantissa = io.input(mantissaWidth - 1,0)
+  val exponent = io.input(fractionWidth + exponentWidth - 1, fractionWidth)
+  val mantissa = io.input(fractionWidth - 1,0)
 
   val denormal = exponent === 0.U
   val supernormal = exponent === (pow(2, exponentWidth).intValue - 1).U

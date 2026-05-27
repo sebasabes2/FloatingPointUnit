@@ -1,4 +1,5 @@
 import floatingPointUnit.FloatingPointUnit
+import floatingPointUnit.SinglePrecisionFloatingPointUnit
 import chisel3._
 import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
@@ -210,7 +211,7 @@ object TestResult extends Enumeration {
 }
 
 object TestRunner {
-  def runTests(dut: FloatingPointUnit, tests: List[TestData]): Unit = {
+  def runTests(dut: SinglePrecisionFloatingPointUnit, tests: List[TestData]): Unit = {
     val iterator = tests.iterator
     var passed = 0
     var failed = 0
@@ -237,7 +238,7 @@ object TestRunner {
     }
   }
 
-  def runTest(dut: FloatingPointUnit, test: TestData, silent: Boolean = true): TestResult.Value = {
+  def runTest(dut: SinglePrecisionFloatingPointUnit, test: TestData, silent: Boolean = true): TestResult.Value = {
     // Select operation
     if (test.operation == "b32+") {
       dut.io.operation.poke(0.U)
@@ -300,7 +301,7 @@ object TestRunner {
 
 class TestSuite extends AnyFlatSpec with ChiselScalatestTester {
   "FloatingPointUnit" should "pass test suite" in {
-    test(new FloatingPointUnit) { dut =>
+    test(new SinglePrecisionFloatingPointUnit) { dut =>
       dut.clock.setTimeout(100000)
       val tests = TestParser.getAllTests("ieee754-test-suite")
       TestRunner.runTests(dut, tests)

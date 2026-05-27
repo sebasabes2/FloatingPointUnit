@@ -4,13 +4,33 @@ import circt.stage.ChiselStage
 import chisel3._
 import chisel3.util._
 
-class FloatingPointUnit extends Module {
+class Stages {
+  var input = false
+  var output = false
+
+  var exponentMatcher = false
+  var preAdder = false
+  var adder = false
+  var multiplier = false
+  var combiner = false
+  var rightNormalizer = false
+  var leftNormalizer = false
+  var shortener = false
+  var rounder = false
+  var renormalizer = false
+  var encoder = false
+}
+
+class FloatingPointUnit(exponentWidth: Int, fractionWidth: Int, stages: Stages = new Stages) extends Module {
+  val floatingPointWidth = 1 + exponentWidth + fractionWidth
+  val significandWidth = 1 + fractionWidth
+
   val io = IO(new Bundle {
-    val input1 = Input(UInt(32.W))
-    val input2 = Input(UInt(32.W))
+    val input1 = Input(UInt(floatingPointWidth.W))
+    val input2 = Input(UInt(floatingPointWidth.W))
     val operation = Input(UInt(2.W))
     val roundingMode = Input(UInt(3.W))
-    val output = Output(UInt(32.W))
+    val output = Output(UInt(floatingPointWidth.W))
     val flags = Output(new Bundle {
       val overflow = Bool()
       val underflow = Bool()
@@ -20,81 +40,89 @@ class FloatingPointUnit extends Module {
     })
   })
 
-  val exponentWidth = 8
-  val mantissaWidth = 23
-  val significandWidth = mantissaWidth + 1
+  def chooseRegNext[T <: Data](choice: Boolean, input: => T): T = if (choice) RegNext(input) else input
 
   // Decode floating points
-  val decoder1 = Module(new Decoder(exponentWidth, mantissaWidth))
-  val decoder2 = Module(new Decoder(exponentWidth, mantissaWidth))
-  decoder1.io.input := io.input1
-  decoder2.io.input := io.input2
+  val decoder1 = Module(new Decoder(exponentWidth, fractionWidth))
+  val decoder2 = Module(new Decoder(exponentWidth, fractionWidth))
+  decoder1.io.input := chooseRegNext(stages.input, io.input1)
+  decoder2.io.input := chooseRegNext(stages.input, io.input2)
+  val decoderStageOperation = chooseRegNext(stages.input, io.operation)
+  val decoderStageRoundingMode = chooseRegNext(stages.input, io.roundingMode)
 
   // ExponentMatcher
   val exponentMatcher = Module(new ExponentMatcher(exponentWidth, significandWidth))
-  exponentMatcher.io.input1 := decoder1.io.output
-  exponentMatcher.io.input2 := decoder2.io.output
-  exponentMatcher.io.subtraction := io.operation(0)
+  exponentMatcher.io.input1 := chooseRegNext(stages.exponentMatcher, decoder1.io.output)
+  exponentMatcher.io.input2 := chooseRegNext(stages.exponentMatcher, decoder2.io.output)
+  exponentMatcher.io.subtraction := chooseRegNext(stages.exponentMatcher, decoderStageOperation(0))
+  val exponentMatcherStageOperation = chooseRegNext(stages.exponentMatcher, decoderStageOperation)
+  val exponentMatcherStageRoundingMode = chooseRegNext(stages.exponentMatcher, decoderStageRoundingMode)
 
   // PreAdder
   val preAdder = Module(new PreAdder(exponentWidth, significandWidth))
-  preAdder.io.larger := exponentMatcher.io.larger
-  preAdder.io.smaller := exponentMatcher.io.smaller
+  preAdder.io.larger := chooseRegNext(stages.preAdder, exponentMatcher.io.larger)
+  preAdder.io.smaller := chooseRegNext(stages.preAdder, exponentMatcher.io.smaller)
+  val preAdderStageOperation = chooseRegNext(stages.preAdder, exponentMatcherStageOperation)
+  val preAdderStageRoundingMode = chooseRegNext(stages.preAdder, exponentMatcherStageRoundingMode)
 
   // Adder
   val adder = Module(new Adder(exponentWidth, significandWidth))
-  adder.io.input1 := preAdder.io.input1
-  adder.io.input2 := preAdder.io.input2
-  adder.io.subtract := preAdder.io.subtract
+  adder.io.input1 := chooseRegNext(stages.adder, preAdder.io.input1)
+  adder.io.input2 := chooseRegNext(stages.adder, preAdder.io.input2)
+  adder.io.subtract := chooseRegNext(stages.adder, preAdder.io.subtract)
+  val adderStageOperation = chooseRegNext(stages.adder, preAdderStageOperation)
+  val adderStageRoundingMode = chooseRegNext(stages.adder, preAdderStageRoundingMode)
 
   // Multiplier
   val multiplier = Module(new Multiplier(exponentWidth, significandWidth))
-  multiplier.io.input1 := decoder1.io.output
-  multiplier.io.input2 := decoder2.io.output
-
-  val adderOutput = RegNext(adder.io.output)
-  val multiplierOutput = RegNext(multiplier.io.output)
-  val operation = RegNext(io.operation)
-  val roundingMode1 = RegNext(io.roundingMode)
+  multiplier.io.input1 := chooseRegNext(stages.multiplier, decoder1.io.output)
+  multiplier.io.input2 := chooseRegNext(stages.multiplier, decoder2.io.output)
 
   // Combiner
   val combiner = Module(new Combiner(exponentWidth, significandWidth + 1, significandWidth * 2))
-  combiner.io.addition := adderOutput
-  combiner.io.multiplication := multiplierOutput
-  combiner.io.operation := operation
+  combiner.io.addition := chooseRegNext(stages.combiner, adder.io.output)
+  combiner.io.multiplication := chooseRegNext(stages.combiner, multiplier.io.output)
+  combiner.io.operation := chooseRegNext(stages.combiner, adderStageOperation)
+  val combinerStageRoundingMode = chooseRegNext(stages.combiner, adderStageRoundingMode)
 
   // Right normalizer
   val rightNormalizer = Module(new RightNormalizer(exponentWidth, significandWidth * 2 - 1))
-  rightNormalizer.io.input := combiner.io.output
+  rightNormalizer.io.input := chooseRegNext(stages.rightNormalizer, combiner.io.output)
+  val rightNormalizerStageRoundingMode = chooseRegNext(stages.rightNormalizer, combinerStageRoundingMode)
 
   // Left normalizer
   val leftNormalizer = Module(new LeftNormalizer(exponentWidth, significandWidth * 2 - 1))
-  leftNormalizer.io.input := rightNormalizer.io.output
-
-  val leftNormalizerOutput = RegNext(leftNormalizer.io.output)
-  val roundingMode2 = RegNext(roundingMode1)
+  leftNormalizer.io.input := chooseRegNext(stages.leftNormalizer, rightNormalizer.io.output)
+  val leftNormalizerStageRoundingMode = chooseRegNext(stages.leftNormalizer, rightNormalizerStageRoundingMode)
 
   // Shortener
   val shortener = Module(new Shortener(exponentWidth, significandWidth * 2 - 1, significandWidth))
-  shortener.io.input := leftNormalizerOutput
+  shortener.io.input := chooseRegNext(stages.shortener, leftNormalizer.io.output)
+  val shortenerStageRoundingMode = chooseRegNext(stages.shortener, leftNormalizerStageRoundingMode)
 
   // Rounder
   val rounder = Module(new Rounder(exponentWidth, significandWidth))
-  rounder.io.input := shortener.io.output
-  rounder.io.roundingMode := roundingMode2
+  rounder.io.input := chooseRegNext(stages.rounder, shortener.io.output)
+  rounder.io.roundingMode := chooseRegNext(stages.rounder, shortenerStageRoundingMode)
 
   // Renormalizer
   val renormalizer = Module(new RightNormalizer(exponentWidth, significandWidth))
-  renormalizer.io.input := rounder.io.output
+  renormalizer.io.input := chooseRegNext(stages.renormalizer, rounder.io.output)
 
   // Encode output
-  val encoder = Module(new Encoder(exponentWidth, mantissaWidth))
-  encoder.io.input := renormalizer.io.output
-  io.output := encoder.io.output
-  io.flags := encoder.io.flags
+  val encoder = Module(new Encoder(exponentWidth, fractionWidth))
+  encoder.io.input := chooseRegNext(stages.encoder, renormalizer.io.output)
+
+  // Output
+  io.output := chooseRegNext(stages.output, encoder.io.output)
+  io.flags := chooseRegNext(stages.output, encoder.io.flags)
 }
 
+class HalfPrecisionFloatingPointUnit(stages: Stages = new Stages) extends FloatingPointUnit(5, 10, stages)
+class SinglePrecisionFloatingPointUnit(stages: Stages = new Stages) extends FloatingPointUnit(8, 23, stages)
+class DoublePrecisionFloatingPointUnit(stages: Stages = new Stages) extends FloatingPointUnit(11, 52, stages)
+
 object FloatingPointUnit extends App {
-  emitVerilog(new FloatingPointUnit)
+  emitVerilog(new SinglePrecisionFloatingPointUnit)
 }
 

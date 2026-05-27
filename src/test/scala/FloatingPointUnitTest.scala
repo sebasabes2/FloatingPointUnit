@@ -7,7 +7,6 @@ object FloatingPointUnitTest {
     dut.io.input1.poke(("x" + java.lang.Float.floatToIntBits(input1).toHexString).U)
     dut.io.input2.poke(("x" + java.lang.Float.floatToIntBits(input2).toHexString).U)
     dut.io.operation.poke(0.U)
-    dut.clock.step(6)
     dut.io.output.expect(("x" + java.lang.Float.floatToIntBits(expected).toHexString).U)
   }
 }

@@ -3,7 +3,7 @@ package fpuTester
 import circt.stage.ChiselStage
 import chisel3._
 import chisel3.util._
-import floatingPointUnit.FloatingPointUnit
+import floatingPointUnit.SinglePrecisionFloatingPointUnit
 
 class FpuTester extends Module {
   val io = IO(new Bundle {
@@ -40,14 +40,21 @@ class FpuTester extends Module {
   val input1 = input1reg(3) ## input1reg(2) ## input1reg(1) ## input1reg(0)
   val input2 = input2reg(3) ## input2reg(2) ## input2reg(1) ## input2reg(0)
 
-  val fpu = Module(new FloatingPointUnit)
+  val stages = new Stages {
+    input = true
+    output = true
+    combiner = true
+    shortener = true
+  }
 
-  fpu.io.operation := RegNext(ctrlReg(1,0))
-  fpu.io.roundingMode := RegNext(ctrlReg(4,2))
-  fpu.io.input1 := RegNext(input1)
-  fpu.io.input2 := RegNext(input2)
+  val fpu = Module(new SinglePrecisionFloatingPointUnit(stages))
 
-  val output = RegNext(fpu.io.output)
+  fpu.io.operation := ctrlReg(1,0)
+  fpu.io.roundingMode := ctrlReg(4,2)
+  fpu.io.input1 := input1
+  fpu.io.input2 := input2
+
+  val output = fpu.io.output
 
   // Output
 
