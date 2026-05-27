@@ -23,6 +23,7 @@ class FpuTester extends Module {
 
   // State 
 
+  val ctrlReg = Reg(UInt(5.W))
   val input1reg = Reg(Vec(4, UInt(8.W)))
   val input2reg = Reg(Vec(4, UInt(8.W)))
 
@@ -30,6 +31,7 @@ class FpuTester extends Module {
     switch(select) {
       is (0.U) { input1reg(index) := value }
       is (1.U) { input2reg(index) := value }
+      is (2.U) { ctrlReg := value }
     }
   }
 
@@ -40,8 +42,8 @@ class FpuTester extends Module {
 
   val fpu = Module(new FloatingPointUnit)
 
-  fpu.io.operation := 0.U
-  fpu.io.roundingMode := 0.U
+  fpu.io.operation := RegNext(ctrlReg(1,0))
+  fpu.io.roundingMode := RegNext(ctrlReg(4,2))
   fpu.io.input1 := RegNext(input1)
   fpu.io.input2 := RegNext(input2)
 
@@ -58,6 +60,8 @@ class FpuTester extends Module {
     is (3.U) { led := input2reg(3) ## input2reg(2) }
     is (4.U) { led := output(15,0) }
     is (5.U) { led := output(31,16) }
+    is (6.U) { led := ctrlReg }
+    is (7.U) { led := ctrlReg }
   }
 
   io.led := RegNext(led)
