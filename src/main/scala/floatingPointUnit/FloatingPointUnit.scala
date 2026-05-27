@@ -52,11 +52,16 @@ class FloatingPointUnit extends Module {
   multiplier.io.input1 := decoder1.io.output
   multiplier.io.input2 := decoder2.io.output
 
+  val adderOutput = RegNext(adder.io.output)
+  val multiplierOutput = RegNext(multiplier.io.output)
+  val operation = RegNext(io.operation)
+  val roundingMode1 = RegNext(io.roundingMode)
+
   // Combiner
   val combiner = Module(new Combiner(exponentWidth, significandWidth + 1, significandWidth * 2))
-  combiner.io.addition := adder.io.output
-  combiner.io.multiplication := multiplier.io.output
-  combiner.io.operation := io.operation
+  combiner.io.addition := adderOutput
+  combiner.io.multiplication := multiplierOutput
+  combiner.io.operation := operation
 
   // Right normalizer
   val rightNormalizer = Module(new RightNormalizer(exponentWidth, significandWidth * 2 - 1))
@@ -66,14 +71,17 @@ class FloatingPointUnit extends Module {
   val leftNormalizer = Module(new LeftNormalizer(exponentWidth, significandWidth * 2 - 1))
   leftNormalizer.io.input := rightNormalizer.io.output
 
+  val leftNormalizerOutput = RegNext(leftNormalizer.io.output)
+  val roundingMode2 = RegNext(roundingMode1)
+
   // Shortener
   val shortener = Module(new Shortener(exponentWidth, significandWidth * 2 - 1, significandWidth))
-  shortener.io.input := leftNormalizer.io.output
+  shortener.io.input := leftNormalizerOutput
 
   // Rounder
   val rounder = Module(new Rounder(exponentWidth, significandWidth))
   rounder.io.input := shortener.io.output
-  rounder.io.roundingMode := io.roundingMode
+  rounder.io.roundingMode := roundingMode2
 
   // Renormalizer
   val renormalizer = Module(new RightNormalizer(exponentWidth, significandWidth))
