@@ -121,8 +121,3 @@ class FloatingPointUnit(exponentWidth: Int, fractionWidth: Int, stages: Stages =
 class HalfPrecisionFloatingPointUnit(stages: Stages = new Stages) extends FloatingPointUnit(5, 10, stages)
 class SinglePrecisionFloatingPointUnit(stages: Stages = new Stages) extends FloatingPointUnit(8, 23, stages)
 class DoublePrecisionFloatingPointUnit(stages: Stages = new Stages) extends FloatingPointUnit(11, 52, stages)
-
-object FloatingPointUnit extends App {
-  emitVerilog(new SinglePrecisionFloatingPointUnit)
-}
-
