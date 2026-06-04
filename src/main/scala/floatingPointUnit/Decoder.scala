@@ -14,16 +14,16 @@ class Decoder(exponentWidth: Int, fractionWidth: Int) extends Module {
 
   val sign = io.input(floatingPointWidth - 1)
   val exponent = io.input(fractionWidth + exponentWidth - 1, fractionWidth)
-  val mantissa = io.input(fractionWidth - 1,0)
+  val fraction = io.input(fractionWidth - 1,0)
 
   val denormal = exponent === 0.U
   val supernormal = exponent === (pow(2, exponentWidth).intValue - 1).U
-  val infinity = supernormal && mantissa === 0.U
-  val nan = supernormal && mantissa =/= 0.U
+  val infinity = supernormal && fraction === 0.U
+  val nan = supernormal && fraction =/= 0.U
 
   io.output.sign := sign
   io.output.exponent := Mux(denormal, 1.U, exponent)
-  io.output.significand := !denormal ## mantissa
+  io.output.significand := !denormal ## fraction
   io.output.guard := 0.U
   io.output.round := 0.U
   io.output.sticky := 0.U
