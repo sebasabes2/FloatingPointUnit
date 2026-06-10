@@ -9,7 +9,6 @@ class Stages {
   var output = false
 
   var exponentMatcher = false
-  var preAdder = false
   var adder = false
   var multiplier = false
   var combiner = false
@@ -58,20 +57,12 @@ class FloatingPointUnit(exponentWidth: Int, fractionWidth: Int, stages: Stages =
   val exponentMatcherStageOperation = chooseRegNext(stages.exponentMatcher, decoderStageOperation)
   val exponentMatcherStageRoundingMode = chooseRegNext(stages.exponentMatcher, decoderStageRoundingMode)
 
-  // PreAdder
-  val preAdder = Module(new PreAdder(exponentWidth, significandWidth))
-  preAdder.io.larger := chooseRegNext(stages.preAdder, exponentMatcher.io.larger)
-  preAdder.io.smaller := chooseRegNext(stages.preAdder, exponentMatcher.io.smaller)
-  val preAdderStageOperation = chooseRegNext(stages.preAdder, exponentMatcherStageOperation)
-  val preAdderStageRoundingMode = chooseRegNext(stages.preAdder, exponentMatcherStageRoundingMode)
-
   // Adder
   val adder = Module(new Adder(exponentWidth, significandWidth))
-  adder.io.input1 := chooseRegNext(stages.adder, preAdder.io.input1)
-  adder.io.input2 := chooseRegNext(stages.adder, preAdder.io.input2)
-  adder.io.subtract := chooseRegNext(stages.adder, preAdder.io.subtract)
-  val adderStageOperation = chooseRegNext(stages.adder, preAdderStageOperation)
-  val adderStageRoundingMode = chooseRegNext(stages.adder, preAdderStageRoundingMode)
+  adder.io.larger := chooseRegNext(stages.adder, exponentMatcher.io.larger)
+  adder.io.smaller := chooseRegNext(stages.adder, exponentMatcher.io.smaller)
+  val adderStageOperation = chooseRegNext(stages.adder, exponentMatcherStageOperation)
+  val adderStageRoundingMode = chooseRegNext(stages.adder, exponentMatcherStageRoundingMode)
 
   // Multiplier
   val multiplier = Module(new Multiplier(exponentWidth, significandWidth))
