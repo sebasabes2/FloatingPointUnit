@@ -70,7 +70,7 @@ class SequenceTest extends AnyFlatSpec with ChiselScalatestTester {
   }
 
   "FloatingPointUnit with three stages" should "pass" in {
-    test(new SinglePrecisionFloatingPointUnit(new Stages { adder = true; multiplier = true; combiner = true; shortener = true })) { dut =>
+    test(new SinglePrecisionFloatingPointUnit(new Stages { adder = true; multiplier = true; selector = true; shortener = true })) { dut =>
       testWithDelay(dut, 3)
     }
   }

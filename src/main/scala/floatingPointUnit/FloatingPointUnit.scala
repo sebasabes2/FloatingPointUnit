@@ -11,7 +11,7 @@ class Stages {
   var exponentMatcher = false
   var adder = false
   var multiplier = false
-  var combiner = false
+  var selector = false
   var rightNormalizer = false
   var leftNormalizer = false
   var shortener = false
@@ -69,17 +69,17 @@ class FloatingPointUnit(exponentWidth: Int, fractionWidth: Int, stages: Stages =
   multiplier.io.input1 := chooseRegNext(stages.multiplier, decoder1.io.output)
   multiplier.io.input2 := chooseRegNext(stages.multiplier, decoder2.io.output)
 
-  // Combiner
-  val combiner = Module(new Combiner(exponentWidth, significandWidth + 1, significandWidth * 2))
-  combiner.io.addition := chooseRegNext(stages.combiner, adder.io.output)
-  combiner.io.multiplication := chooseRegNext(stages.combiner, multiplier.io.output)
-  combiner.io.operation := chooseRegNext(stages.combiner, adderStageOperation)
-  val combinerStageRoundingMode = chooseRegNext(stages.combiner, adderStageRoundingMode)
+  // Selector
+  val selector = Module(new Selector(exponentWidth, significandWidth + 1, significandWidth * 2))
+  selector.io.addition := chooseRegNext(stages.selector, adder.io.output)
+  selector.io.multiplication := chooseRegNext(stages.selector, multiplier.io.output)
+  selector.io.operation := chooseRegNext(stages.selector, adderStageOperation)
+  val selectorStageRoundingMode = chooseRegNext(stages.selector, adderStageRoundingMode)
 
   // Right normalizer
   val rightNormalizer = Module(new RightNormalizer(exponentWidth, significandWidth * 2 - 1))
-  rightNormalizer.io.input := chooseRegNext(stages.rightNormalizer, combiner.io.output)
-  val rightNormalizerStageRoundingMode = chooseRegNext(stages.rightNormalizer, combinerStageRoundingMode)
+  rightNormalizer.io.input := chooseRegNext(stages.rightNormalizer, selector.io.output)
+  val rightNormalizerStageRoundingMode = chooseRegNext(stages.rightNormalizer, selectorStageRoundingMode)
 
   // Left normalizer
   val leftNormalizer = Module(new LeftNormalizer(exponentWidth, significandWidth * 2 - 1))

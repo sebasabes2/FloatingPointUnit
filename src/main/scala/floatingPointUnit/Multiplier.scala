@@ -35,10 +35,10 @@ class Multiplier(exponentWidth: Int, significandWidth: Int) extends Module {
   io.output.sticky := stickyBitDetector.io.sticky || rightShiftAmount >= (significandWidth * 2 + 2).U
 
   // Special cases
-  val zero = (io.input1.significand === 0.U && io.input2.infinity) || (io.input2.significand === 0.U && io.input1.infinity)
+  val nan = (io.input1.significand === 0.U && io.input2.infinity) || (io.input2.significand === 0.U && io.input1.infinity)
   io.output.infinity := io.input1.infinity || io.input2.infinity || overflow
   io.output.denormal := underflow
-  io.output.zero := zero
+  io.output.zero := false.B
   io.output.inexact := false.B
-  io.output.nan := zero || io.input1.nan || io.input2.nan
+  io.output.nan := nan || io.input1.nan || io.input2.nan
 }

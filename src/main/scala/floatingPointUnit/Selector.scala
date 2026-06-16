@@ -3,7 +3,7 @@ package floatingPointUnit
 import chisel3._
 import chisel3.util._
 
-class Combiner(exponentWidth: Int, additionSignificandWidth: Int, multiplicationSignificandWidth: Int) extends Module {
+class Selector(exponentWidth: Int, additionSignificandWidth: Int, multiplicationSignificandWidth: Int) extends Module {
   val io = IO(new Bundle {
     val addition = Input(new FloatingPoint(exponentWidth, additionSignificandWidth))
     val multiplication = Input(new FloatingPoint(exponentWidth, multiplicationSignificandWidth))

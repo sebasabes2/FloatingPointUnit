@@ -21,5 +21,4 @@ class LeftNormalizer(exponentWidth: Int, significandWidth: Int) extends Module {
   io.output.guard := significand(2)
   io.output.round := significand(1)
   io.output.denormal := underflow
-  io.output.zero := io.input.zero || leadingOneDetector.io.zero
 }
