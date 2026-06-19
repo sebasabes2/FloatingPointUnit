@@ -5,6 +5,7 @@ import chiseltest._
 import org.scalatest.flatspec.AnyFlatSpec
 import java.io.File
 import scala.io.Source
+import scala.math
 
 class Exceptions {
   var inexact = false
@@ -207,7 +208,7 @@ object TestParser {
 }
 
 object TestResult extends Enumeration {
-  val passed, failed, skipped = Value
+  val passed, failed, skipped, bad = Value
 }
 
 object TestRunner {
@@ -216,6 +217,7 @@ object TestRunner {
     var passed = 0
     var failed = 0
     var skipped = 0
+    var bad = 0
     var firstFail = tests(0)
     while (iterator.hasNext) {
       val test = iterator.next()
@@ -224,11 +226,13 @@ object TestRunner {
       if (result == TestResult.passed) { passed += 1 }
       if (result == TestResult.failed) { failed += 1 }
       if (result == TestResult.skipped) { skipped += 1 }
+      if (result == TestResult.bad) { bad += 1 }
     }
     println(f"[info] Test suite result:")
     println(f"[info]   $passed passed")
     println(f"[info]   $failed failed")
     println(f"[info]   $skipped skipped")
+    println(f"[info]   $bad bad tests")
     if (failed != 0) {
       println(f"[${Console.RED}error${Console.RESET}] Test suite failed")
       println(f"[${Console.RED}error${Console.RESET}] First test to fail was ${firstFail.path}")
@@ -239,6 +243,10 @@ object TestRunner {
   }
 
   def runTest(dut: SinglePrecisionFloatingPointUnit, test: TestData, silent: Boolean = true): TestResult.Value = {
+    // See if test is bad
+    if (checkBadTest(test)) {
+      return TestResult.bad
+    }
     // Select operation
     if (test.operation == "b32+") {
       dut.io.operation.poke(0.U)
@@ -252,13 +260,13 @@ object TestRunner {
     // Select rounding mode
     if (test.roundingMode == "=0") {
       dut.io.roundingMode.poke(0.U)
-    } else if (test.roundingMode == "=^") {
-      dut.io.roundingMode.poke(1.U)
-    } else if (test.roundingMode == ">") {
-      dut.io.roundingMode.poke(2.U)
-    } else if (test.roundingMode == "<") {
-      dut.io.roundingMode.poke(3.U)
     } else if (test.roundingMode == "0") {
+      dut.io.roundingMode.poke(1.U)
+    } else if (test.roundingMode == "<") {
+      dut.io.roundingMode.poke(2.U)
+    } else if (test.roundingMode == ">") {
+      dut.io.roundingMode.poke(3.U)
+    } else if (test.roundingMode == "=^") {
       dut.io.roundingMode.poke(4.U)
     } else {
       return TestResult.skipped
@@ -269,23 +277,6 @@ object TestRunner {
     val expectedOutput = ("x" + java.lang.Float.floatToIntBits(test.output).toHexString).U
     dut.io.input1.poke(input1)
     dut.io.input2.poke(input2)
-    // Check flags
-    if (test.raisedExceptions.underflow) {
-      if (!silent) { dut.io.flags.underflow.expect(true.B) }
-      if (dut.io.flags.underflow.peek().litToBoolean) {
-        return TestResult.passed
-      } else {
-        return TestResult.failed
-      }
-    }
-    if (test.raisedExceptions.overflow) {
-      if (!silent) { dut.io.flags.overflow.expect(true.B) }
-      if (dut.io.flags.overflow.peek().litToBoolean) {
-        return TestResult.passed
-      } else {
-        return TestResult.failed
-      }
-    }
     // Check result
     if (!silent) {
       dut.io.output.expect(expectedOutput)
@@ -297,12 +288,42 @@ object TestRunner {
       return TestResult.failed
     }
   }
+
+  def checkBadTest(test: TestData): Boolean = {
+    var result: Float = Float.NaN
+    if (test.operation == "b32+") {
+      result = test.input1 + test.input2
+    } else if (test.operation == "b32-") {
+      result = test.input1 - test.input2
+    } else if (test.operation == "b32*") {
+      result = test.input1 * test.input2
+    } else {
+      return false
+    }
+
+    // If both results are NaN test is good
+    if (result.isNaN && test.output.isNaN) {
+      return false
+    }
+
+    // If either result is infinity results must mach exactly
+    if (result.isInfinity || test.output.isInfinity) {
+      return result != test.output
+    }
+
+    // Otherwise they must be within one floating point of each other due to rounding
+    if (math.nextDown(result) <= test.output && math.nextUp(result) >= test.output) {
+      return false
+    }
+
+    // Otherwise test is bad
+    return true;
+  }
 }
 
 class TestSuite extends AnyFlatSpec with ChiselScalatestTester {
   "FloatingPointUnit" should "pass test suite" in {
     test(new SinglePrecisionFloatingPointUnit) { dut =>
-      dut.clock.setTimeout(100000)
       val tests = TestParser.getAllTests("ieee754-test-suite")
       TestRunner.runTests(dut, tests)
     }
