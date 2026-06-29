@@ -243,10 +243,6 @@ object TestRunner {
   }
 
   def runTest(dut: SinglePrecisionFloatingPointUnit, test: TestData, silent: Boolean = true): TestResult.Value = {
-    // See if test is bad
-    if (checkBadTest(test)) {
-      return TestResult.bad
-    }
     // Select operation
     if (test.operation == "b32+") {
       dut.io.operation.poke(0.U)

@@ -19,4 +19,22 @@ class MultiplierTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.output.significand.expect("x7FFFFF800000".U)
     }
   }
+
+  "Multiplier" should "pass ieee754-test-suite/Overflow.fptest:1079" in {
+    test(new Multiplier(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x0".U)
+      dut.io.input1.exponent.poke("xC0".U)
+      dut.io.input1.significand.poke("x800000".U)
+
+      dut.io.input2.sign.poke("x0".U)
+      dut.io.input2.exponent.poke("xBE".U)
+      dut.io.input2.significand.poke("x800000".U)
+
+      dut.io.roundingMode.poke(1.U)
+
+      dut.io.output.sign.expect("x0".U)
+      dut.io.output.exponent.expect("xFE".U)
+      dut.io.output.significand.expect("xFFFFFFFFFFFF".U)
+    }
+  }
 }

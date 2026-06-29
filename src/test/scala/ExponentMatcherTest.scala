@@ -249,4 +249,27 @@ class ExponentMatcherTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.smaller.sticky.expect("x0".U)
     }
   }
+
+  "ExponentMatcher" should "pass ieee754-test-suite/Overflow.fptest:83" in {
+    test(new ExponentMatcher(8, 24)) { dut =>
+      dut.io.input1.sign.poke("x0".U)
+      dut.io.input1.exponent.poke("xF9".U)
+      dut.io.input1.significand.poke("xFE6760".U)
+
+      dut.io.input2.sign.poke("x0".U)
+      dut.io.input2.exponent.poke("xFE".U)
+      dut.io.input2.significand.poke("xF80CC5".U)
+
+      dut.io.larger.sign.expect("x0".U)
+      dut.io.larger.exponent.expect("xFE".U)
+      dut.io.larger.significand.expect("xF80CC5".U)
+
+      dut.io.smaller.sign.expect("x0".U)
+      dut.io.smaller.exponent.expect("xFE".U)
+      dut.io.smaller.significand.expect("x07F33B".U)
+      dut.io.smaller.guard.expect("x0".U)
+      dut.io.smaller.round.expect("x0".U)
+      dut.io.smaller.sticky.expect("x0".U)
+    }
+  }
 }

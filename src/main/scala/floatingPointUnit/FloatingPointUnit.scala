@@ -68,6 +68,7 @@ class FloatingPointUnit(exponentWidth: Int, fractionWidth: Int, stages: Stages =
   val multiplier = Module(new Multiplier(exponentWidth, significandWidth))
   multiplier.io.input1 := chooseRegNext(stages.multiplier, decoder1.io.output)
   multiplier.io.input2 := chooseRegNext(stages.multiplier, decoder2.io.output)
+  multiplier.io.roundingMode := chooseRegNext(stages.multiplier, decoderStageRoundingMode)
 
   // Selector
   val selector = Module(new Selector(exponentWidth, significandWidth + 1, significandWidth * 2))
@@ -79,6 +80,7 @@ class FloatingPointUnit(exponentWidth: Int, fractionWidth: Int, stages: Stages =
   // Right normalizer
   val rightNormalizer = Module(new RightNormalizer(exponentWidth, significandWidth * 2 - 1))
   rightNormalizer.io.input := chooseRegNext(stages.rightNormalizer, selector.io.output)
+  rightNormalizer.io.roundingMode := chooseRegNext(stages.rightNormalizer, selectorStageRoundingMode)
   val rightNormalizerStageRoundingMode = chooseRegNext(stages.rightNormalizer, selectorStageRoundingMode)
 
   // Left normalizer
@@ -95,10 +97,12 @@ class FloatingPointUnit(exponentWidth: Int, fractionWidth: Int, stages: Stages =
   val rounder = Module(new Rounder(exponentWidth, significandWidth))
   rounder.io.input := chooseRegNext(stages.rounder, shortener.io.output)
   rounder.io.roundingMode := chooseRegNext(stages.rounder, shortenerStageRoundingMode)
+  val rounderStageRoundingMode = chooseRegNext(stages.rounder, shortenerStageRoundingMode)
 
   // Renormalizer
   val renormalizer = Module(new RightNormalizer(exponentWidth, significandWidth))
   renormalizer.io.input := chooseRegNext(stages.renormalizer, rounder.io.output)
+  renormalizer.io.roundingMode := chooseRegNext(stages.renormalizer, rounderStageRoundingMode)
 
   // Encode output
   val encoder = Module(new Encoder(exponentWidth, fractionWidth))
